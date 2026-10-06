@@ -1,0 +1,58 @@
+name: Something does not work
+description: A fault in the application, the installer or the documentation.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time. Please do not attach recordings, and remove personal details (titles, names, account e-mail addresses) from anything you paste.
+        Security problems must not be reported here: use **Security → Report a vulnerability**.
+  - type: input
+    id: version
+    attributes:
+      label: Application version
+      description: Settings → About shows it. Say whether you used the installer or the portable package.
+      placeholder: 0.6.0, installer
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: Windows 11 24H2
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where does it happen?
+      options:
+        - Installing or starting
+        - Connect (finding the recorder)
+        - Discover (folders, selection, preview)
+        - Preserve (saving recordings)
+        - Archive or upload
+        - Cloud page or cloud sign-in
+        - Settings (including the FFmpeg download)
+        - Documentation
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: What did you do, and what happened?
+      description: The exact message the application showed helps most. The message bar and the status line at the bottom can be copied by typing them out or with a screenshot.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else
+      description: Recorder model, cloud account type (personal or work/school OneDrive, Google), language of the application. For a recorder that is found but will not open, attach the ZIP made by the diagnostics kit.

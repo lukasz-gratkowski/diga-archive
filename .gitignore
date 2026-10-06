@@ -1,0 +1,26 @@
+**/bin/
+**/obj/
+.vs/
+.vscode/
+.idea/
+.codex/
+.claude/
+node_modules/
+artifacts/
+TestResults/
+tools/bin/
+tools/downloads/
+# The pinned Inno Setup compiler, unpacked by scripts/Get-InnoSetup.ps1.
+tools/innosetup/
+*.user
+*.log
+# Signing material never belongs in the repository.
+*.pfx
+*.p12
+*.snk
+*.pem
+*.key
+*.cer
+
+# Tools the signing script downloads.
+tools/signing/

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security problem privately
+    url: https://github.com/lukasz-gratkowski/AmgDigaArchive/security/advisories/new
+    about: Please do not open a public issue for a vulnerability.
+  - name: User guide
+    url: https://github.com/lukasz-gratkowski/AmgDigaArchive/blob/main/docs/USER-GUIDE.md
+    about: Installing, connecting a recorder, saving recordings and uploading them.
+  - name: Cloud setup guide
+    url: https://github.com/lukasz-gratkowski/AmgDigaArchive/blob/main/docs/CLOUD-SETUP.md
+    about: Step-by-step setup of OneDrive or Google Drive, with the usual error messages explained.

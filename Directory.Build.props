@@ -1,0 +1,21 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(Configuration)' == 'Release'">true</ContinuousIntegrationBuild>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <Version>0.6.0</Version>
+    <Authors>DIGA contributors</Authors>
+    <Copyright>Copyright © 2026 DIGA contributors</Copyright>
+    <!-- The packages.lock.json beside each project records the exact version and content hash of every package, direct or
+         transitive. scripts/Build.ps1 and CI restore in locked mode, which fails instead of taking anything else. After
+         changing a package version run "dotnet restore Diga.sln" and commit the lock files it rewrites. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <!-- Known vulnerabilities are looked up for every package, not only the ones the projects name. A Release build stops
+         on one rated high (NU1903) or critical (NU1904); a Debug build only warns, so work can go on while it is fixed. -->
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>low</NuGetAuditLevel>
+    <WarningsAsErrors Condition="'$(Configuration)' == 'Release'">$(WarningsAsErrors);NU1903;NU1904</WarningsAsErrors>
+  </PropertyGroup>
+</Project>

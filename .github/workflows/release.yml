@@ -1,0 +1,329 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+# A tag is packaged by exactly one of two paths. Signing is switched on with the repository variable
+# SIGNING_ENABLED = true; from then on a tag is either signed or not released at all. docs/SIGNING.md has the setup.
+#
+#   unsigned:  check -> package -------------------------> publish
+#   signed:    check -> build -> sign -> smoke ----------> publish
+#
+# The signed path is three jobs so that the signing identity exists only in "sign". Before its sign-in that job fetches
+# what it needs: the application folder from "build", the two signing tools, and the Inno Setup compiler, for which it
+# runs Inno Setup's own installer (accepted only with its recorded checksum and signature). After the sign-in it runs
+# signtool with the signing client, the Inno Setup compiler, Git, the Azure CLI, this repository's own scripts and the
+# upload of the finished files, and nothing else: no package restore, no tests, no FFmpeg, and not the application or the
+# installer it has just signed. Its four actions are pinned by commit like every other.
+#
+# The signed files exist as a workflow artifact only between "sign" and "publish". When "smoke" does not succeed, for
+# whatever reason, "discard" deletes them, so GitHub's "Re-run failed jobs" finds nothing to test: use "Re-run all jobs",
+# which builds and signs again and waits for a new approval. A failed "publish" can be run again on its own for as long
+# as the files are kept, which is one day.
+#
+# The runner image is named, not "latest", so that a new image is a change in this file.
+jobs:
+  check:
+    name: Release checks
+    runs-on: windows-2025
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The whole history: the check has to see whether the tagged commit is on main.
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Version, branch, changelog and the documents the release notes link to
+        shell: pwsh
+        env:
+          RELEASE_REF: ${{ github.ref }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $tag = if ($env:RELEASE_REF.StartsWith('refs/tags/')) { $env:RELEASE_TAG } else { '' }
+          ./scripts/Test-ReleaseReadiness.ps1 -Tag $tag
+
+  package:
+    name: Package (unsigned)
+    needs: check
+    if: ${{ !(startsWith(github.ref, 'refs/tags/') && vars.SIGNING_ENABLED == 'true') }}
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - uses: ./.github/actions/package
+
+  build:
+    name: Build and test (to be signed)
+    needs: check
+    if: ${{ startsWith(github.ref, 'refs/tags/') && vars.SIGNING_ENABLED == 'true' }}
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - name: Build and test
+        shell: pwsh
+        run: ./scripts/Build.ps1
+      - name: Publish and check the application folder
+        shell: pwsh
+        run: ./scripts/New-Release.ps1 -Stage Publish -SkipBuild
+      # Not signed yet, and of no use to anyone but the next job.
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: application
+          path: artifacts/publish/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: release-test-results
+          path: artifacts/test-results/*.trx
+          if-no-files-found: warn
+
+  sign:
+    name: Sign and package
+    needs: build
+    runs-on: windows-2025
+    timeout-minutes: 30
+    # The signing identity is reachable only from this environment, which admits release tags only.
+    environment:
+      name: release-signing
+      deployment: false
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Signing configuration
+        shell: pwsh
+        env:
+          ENDPOINT: ${{ vars.DIGA_SIGN_ENDPOINT }}
+          ACCOUNT: ${{ vars.DIGA_SIGN_ACCOUNT }}
+          PROFILE: ${{ vars.DIGA_SIGN_PROFILE }}
+          PUBLISHER: ${{ vars.DIGA_SIGN_PUBLISHER }}
+        run: |
+          # These are names, not secrets. They are handed to the later steps, where the scripts read them. The publisher's
+          # name is required like the others: without it a signature from any certificate would pass as the project's.
+          foreach ($setting in @{ DIGA_SIGN_ENDPOINT = $env:ENDPOINT; DIGA_SIGN_ACCOUNT = $env:ACCOUNT; DIGA_SIGN_PROFILE = $env:PROFILE; DIGA_SIGN_PUBLISHER = $env:PUBLISHER }.GetEnumerator()) {
+            if (-not "$($setting.Value)".Trim()) { throw "SIGNING_ENABLED is true, but the variable $($setting.Key) of the release-signing environment is empty." }
+            if ($setting.Value -match '[\r\n]') { throw "The variable $($setting.Key) must be a single line." }
+            "$($setting.Key)=$($setting.Value)" >> $env:GITHUB_ENV
+          }
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: application
+          path: artifacts/publish
+      - name: Compiler and signing tools, fetched before the sign-in
+        shell: pwsh
+        run: |
+          # Both are accepted only with their recorded checksums. Fetching them now means that nothing is downloaded, and
+          # Inno Setup's own installer is not run, while the signing identity is live.
+          ./scripts/Get-InnoSetup.ps1
+          ./scripts/Sign-Files.ps1 -ToolsOnly
+      # No secret is stored: GitHub vouches for this job to Microsoft Entra (OpenID Connect).
+      - uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Fetch the signing token while the sign-in is fresh
+        shell: pwsh
+        run: |
+          # GitHub's identity token lasts five minutes; the signing token fetched with it is then good for about an hour,
+          # far longer than the rest of this job takes.
+          az account get-access-token --scope https://codesigning.azure.net/.default --output none
+          if ($LASTEXITCODE -ne 0) { throw 'Azure did not issue a token for Artifact Signing. Check the role assignment and the federated credential.' }
+      - name: Sign, compile the installer, verify, package and write checksums
+        shell: pwsh
+        run: ./scripts/New-Release.ps1 -Stage Package
+      # One day: the release is the lasting copy. Files that fail the next job are deleted at once (job "discard").
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-assets
+          path: artifacts/release/*
+          if-no-files-found: error
+          retention-days: 1
+
+  smoke:
+    name: Install and start the signed files
+    needs: sign
+    runs-on: windows-2025
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-assets
+          path: artifacts/release
+      - name: Unpack the portable package
+        shell: pwsh
+        run: |
+          # The package itself is tested here, exactly as a user gets it.
+          $package = @(Get-ChildItem artifacts/release -Filter '*-win-x64-portable.zip')
+          if ($package.Count -ne 1) { throw 'Expected one portable package among the release files.' }
+          Expand-Archive -LiteralPath $package[0].FullName -DestinationPath artifacts/publish
+      - name: Verify signatures, portable launch, install, installed launch, FFmpeg download and uninstall
+        shell: pwsh
+        run: |
+          ./scripts/Test-Package.ps1 -RequireSignature -TestInstaller -InstallerLanguage en
+          ./scripts/Test-Package.ps1 -RequireSignature -TestInstaller -InstallerLanguage pl -WithFfmpegDownload
+      # Text only. The signed files that failed must not become downloadable through this.
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: failed-release-diagnostics
+          path: |
+            artifacts/package-diagnostics.txt
+            artifacts/install-smoke-*-install.log
+          if-no-files-found: warn
+          retention-days: 7
+
+  discard:
+    name: Discard signed files that failed
+    needs: [sign, smoke]
+    # A validly signed build that the project's own checks rejected must not stay downloadable, not even for a day.
+    if: ${{ always() && needs.sign.result == 'success' && needs.smoke.result != 'success' }}
+    runs-on: windows-2025
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Delete the release-assets artifact of this run
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          $ids = @(gh api "repos/$env:GH_REPO/actions/runs/$env:RUN_ID/artifacts" --paginate --jq '.artifacts[] | select(.name == "release-assets") | .id')
+          if ($LASTEXITCODE -ne 0) { throw 'Could not list the artifacts of this run. Delete release-assets by hand on the run page.' }
+          foreach ($id in $ids) {
+            gh api --method DELETE "repos/$env:GH_REPO/actions/artifacts/$id"
+            if ($LASTEXITCODE -ne 0) { throw "Could not delete artifact $id. Delete release-assets by hand on the run page." }
+          }
+          Write-Host "Deleted $($ids.Count) artifact(s) named release-assets."
+
+  publish:
+    name: Publish
+    needs: [package, smoke]
+    # Not always(): that is true for a cancelled run too, and a run cancelled while this job waited for a runner would still
+    # publish. !cancelled() is a status function as well, so the job is not skipped because package or smoke was skipped.
+    if: ${{ !cancelled() && startsWith(github.ref, 'refs/tags/') && (needs.package.result == 'success' || needs.smoke.result == 'success') }}
+    runs-on: windows-2025
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-assets
+          path: release
+      - name: Check the files against their checksums
+        shell: pwsh
+        run: |
+          $checksums = @(Get-Content -LiteralPath 'release/SHA256SUMS.txt')
+          if ($checksums.Count -ne 4) { throw 'Expected checksums for installer, portable package, diagnostics, and source archive.' }
+          foreach ($entry in $checksums) {
+            if ($entry -notmatch '^([0-9a-fA-F]{64})  (DIGA-[0-9]+\.[0-9]+\.[0-9]+-(?:win-x64-setup\.exe|win-x64-portable\.zip|source\.zip|dlna-diagnostics\.zip))$') { throw 'Invalid release checksum manifest entry.' }
+            $expectedHash = $Matches[1]
+            $assetPath = Join-Path 'release' $Matches[2]
+            if ((Get-FileHash -LiteralPath $assetPath -Algorithm SHA256).Hash -ine $expectedHash) { throw "Release checksum mismatch: $assetPath" }
+          }
+          if (@(Get-ChildItem release -File).Count -ne 5) { throw 'The release folder must hold the four files and their checksum list, nothing else.' }
+      - name: Describe the release
+        shell: pwsh
+        env:
+          TAG: ${{ github.ref_name }}
+          COMMIT: ${{ github.sha }}
+          REPOSITORY: ${{ github.repository }}
+          SIGNING_ENABLED: ${{ vars.SIGNING_ENABLED }}
+        run: |
+          $installer = Get-ChildItem release -Filter '*-setup.exe' | Select-Object -First 1
+          $signature = Get-AuthenticodeSignature -LiteralPath $installer.FullName
+          if ($signature.SignerCertificate) {
+            if ($signature.Status -ne 'Valid' -or -not $signature.TimeStamperCertificate) { throw "The installer's signature is not valid: $($signature.Status)" }
+            $publisher = $signature.SignerCertificate.GetNameInfo('SimpleName', $false)
+            $signing = "**Signed.** The installer, the application's own programs and the diagnostics script carry the Authenticode signature of **$publisher**, with a timestamp."
+          }
+          elseif ($env:SIGNING_ENABLED -eq 'true') { throw 'Signing is switched on, but the installer is not signed.' }
+          else {
+            $signing = '**Not signed.** This release has no Authenticode signature, so Windows shows "Windows protected your PC" when the installer is started. Compare the SHA-256 checksum and check the build attestation before you run it.'
+          }
+          # The three documents linked below are checked by scripts/Test-ReleaseReadiness.ps1 before anything is built; keep the two lists equal.
+          @(
+            "AMG DIGA Archive $($env:TAG.TrimStart('v')), built from commit $env:COMMIT by this repository's release workflow.",
+            '',
+            $signing,
+            '',
+            '| File | What it is |',
+            '|---|---|',
+            '| `DIGA-…-win-x64-setup.exe` | Installer for Windows 11 (64-bit); installs for the current user, no administrator rights |',
+            '| `DIGA-…-win-x64-portable.zip` | The same application without an installer |',
+            '| `DIGA-…-dlna-diagnostics.zip` | A small script that reports what a recorder answers when the application cannot open it |',
+            '| `DIGA-…-source.zip` | The exact source of this build, as Git archives the tagged commit |',
+            '| `SHA256SUMS.txt` | SHA-256 checksums of the four files |',
+            '',
+            "FFmpeg is not included; the installer offers to download it. What changed is in [CHANGELOG.md](https://github.com/$env:REPOSITORY/blob/$env:TAG/CHANGELOG.md), how to check a download in [Verifying your download](https://github.com/$env:REPOSITORY/blob/$env:TAG/docs/VERIFYING-DOWNLOADS.md), and how far the application has been tested in the [README](https://github.com/$env:REPOSITORY/blob/$env:TAG/README.md#how-far-it-has-been-tested)."
+          ) | Set-Content (Join-Path $env:RUNNER_TEMP 'release-notes.md') -Encoding utf8
+      # Ties the exact files to this repository, this workflow and this commit. Available to public repositories.
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        if: ${{ !github.event.repository.private }}
+        with:
+          subject-path: release/*
+      - name: Publish, never replacing a published release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $assets = @(Get-ChildItem release -File)
+          $existing = $null
+          $view = gh release view $env:TAG --json isDraft 2>$null
+          if ($LASTEXITCODE -eq 0) { $existing = $view | ConvertFrom-Json }
+          if ($existing -and -not $existing.isDraft) {
+            # A re-run of this job after publication: the published files stay as they are. Identical files are fine, anything else is an error.
+            $published = @{}
+            gh api "repos/$env:GH_REPO/releases/tags/$env:TAG" --jq '.assets[] | "\(.name) \(.digest)"' | ForEach-Object { $name, $digest = $_ -split ' ', 2; $published[$name] = $digest }
+            if ($LASTEXITCODE -ne 0) { throw 'Could not read the published release.' }
+            foreach ($asset in $assets) {
+              $digest = 'sha256:' + (Get-FileHash -LiteralPath $asset.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+              if ($published[$asset.Name] -ne $digest) { throw "$($env:TAG) is already published and $($asset.Name) differs from the published file. A published release is never replaced: release a new version." }
+            }
+            Write-Host "$($env:TAG) is already published with these exact files."
+            return
+          }
+          if ($existing) {
+            # A draft left by an interrupted run. The tag stays.
+            gh release delete $env:TAG --yes
+            if ($LASTEXITCODE -ne 0) { throw 'Could not remove the draft of an interrupted run.' }
+          }
+          # gh uploads to a draft and publishes only when every file has arrived.
+          gh release create $env:TAG @($assets.FullName) --verify-tag --title "AMG DIGA Archive $($env:TAG.TrimStart('v'))" --notes-file (Join-Path $env:RUNNER_TEMP 'release-notes.md')
+          if ($LASTEXITCODE -ne 0) { throw 'Release publication failed.' }

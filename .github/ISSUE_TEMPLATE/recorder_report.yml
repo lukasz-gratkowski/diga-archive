@@ -1,0 +1,47 @@
+name: Recorder report
+description: Tell us whether the application works with your recorder. Reports of success are as useful as reports of failure.
+labels: [recorder]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The project has no recorders of its own, so what works on real hardware is known only from reports like this one.
+        Please do not attach recordings, and leave out programme titles if you would rather not share them.
+  - type: input
+    id: model
+    attributes:
+      label: Recorder model and region
+      description: The model is printed on the back of the recorder, for example DMR-BS850EG.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Application version
+      placeholder: 0.6.0
+    validations:
+      required: true
+  - type: checkboxes
+    id: worked
+    attributes:
+      label: What worked?
+      options:
+        - label: Find network recorders listed the recorder
+        - label: Connect to recorder opened its folders (or the application connected by itself)
+        - label: Recordings were listed in a folder
+        - label: A recording was saved as an exact copy
+        - label: A recording was saved as an easy-to-play file (MKV, MP4 or MPEG)
+        - label: The preview played
+        - label: The saved file plays in a media player
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: What kind of recordings (broadcast in SD or HD, copied from a camera), anything that was refused and the message shown, how you checked the saved file.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: If something failed, run the diagnostics kit (the release's dlna-diagnostics ZIP) on a PC in the recorder's network and attach the ZIP it produces. It contains no titles, names or addresses.
