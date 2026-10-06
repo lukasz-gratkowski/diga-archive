@@ -23,9 +23,20 @@ For the maintainer. A release is made by pushing a version tag; everything else 
 
 A packaging job that fails keeps text for diagnosis (what the start-up check wrote down, the installer's logs), never the packages it made.
 
-**What has been run.** On one PC, on 5 October 2026, the unsigned path as the workflow runs it, on commit `b811dd4`: `New-Release.ps1` with the build and all tests, and the installer test in English and in Polish. Everything passed. In the Polish run the installer downloaded FFmpeg, unpacked it and installed the two programs, which the test compared with their recorded checksums and started. An earlier run of the same steps, on commit `2e20a56`, was made on a Windows account prepared like a developer's, with stand-ins for a downloaded FFmpeg of the same build, a saved sign-in, the logs, the settings and temporary files; every one of them was there unchanged afterwards.
+**What has been run.** On GitHub, on 6 October 2026, all on the unsigned path:
 
-After `b811dd4` the installer changed once more, in commit `63f22eb`: what an earlier version left behind is removed only when an earlier version is installed. On that commit the packaging was run again (`New-Release.ps1 -SkipBuild`), and the new installer was tried by hand, once: a first installation into a folder that already held a `docs` folder with a file of the user's own kept that file, a second installation over the first removed the stand-ins for an earlier version's documents and programs, and the uninstaller removed the application. The installer test in the two languages was not repeated on that commit, and the commits after it changed texts and documents only. The first run of the workflow on GitHub will repeat all of it. What the installer test does when something is in its way (a folder that cannot be set aside, an uninstaller that fails or is missing, a copy that an earlier run left installed, a diagnostics kit that does not fit the release) was run with a stand-in installer in a stand-in account only. The workflows in their present form (the release checks as a job of their own, the pinned Inno Setup compiler, the named runner image, the locked package restore, the three jobs of the signed path) have not run on GitHub yet. Correct this paragraph after the first run.
+- the CI workflow on `main`;
+- a rehearsal of the release workflow, started by hand without a tag: the release checks, the build, all tests, the packaging and the installer test in English and in Polish. In the Polish run the installer downloaded FFmpeg, verified it and installed it. Nothing is published by such a run;
+- the release of version 0.6.0 from the tag `v0.6.0`: the same steps again, then the build attestation and the publication. The published files were downloaded afterwards and compared with `SHA256SUMS.txt`, and the attestation of the installer and of the portable package was verified with `gh attestation verify`.
+
+One run was stopped on purpose. A first tag `v0.6.0` was pushed while the repository still had another name; the run was cancelled before it published anything, the tag was removed, the repository was renamed and the links were corrected, and the tag was made again on the corrected commit. A cancelled run publishes nothing: that is what the condition of the publish job is for.
+
+Before the repository was published, the same steps were run on one PC several times while the pipeline was written. Two things have been tried there only:
+
+- The rule that the installer removes what an earlier version left behind only when an earlier version is installed. It was tried by hand, once: a first installation into a folder that already held a `docs` folder with a file of the user's own kept that file, a second installation over the first removed the stand-ins for an earlier version's documents and programs, and the uninstaller removed the application.
+- What the installer test does when something is in its way (a folder that cannot be set aside, an uninstaller that fails or is missing, a copy that an earlier run left installed, a diagnostics kit that does not fit the release). This was run with a stand-in installer in a stand-in account.
+
+The signed path (the jobs that build, sign and then install the signed files) has not run with a signing identity anywhere; see [Signing](SIGNING.md).
 
 ## Making a release
 
