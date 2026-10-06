@@ -265,7 +265,7 @@ While it works, the application asks Windows not to go to sleep by itself. This 
 
 The diagnostics kit is a small script for Windows. It asks the recorder the same first questions as the application and writes down how the recorder answered, in a form that contains nothing private. Use it when the recorder is not found although you went through the four points above, when it is found but **Connect to recorder** fails, or when you want to report how a model behaves. The full description is in [Diagnostics kit](DLNA-DIAGNOSTICS.md).
 
-**Where to get it.** Every release has a file named `DIGA-…-dlna-diagnostics.zip` on the [releases page](https://github.com/lukasz-gratkowski/AmgDigaArchive/releases). The same script is also part of the application: in the folder `diagnostics` beside `Diga.exe` (for an installed copy this is `%LOCALAPPDATA%\Programs\DIGA\diagnostics`, unless you chose another folder).
+**Where to get it.** Every release has a file named `DIGA-…-dlna-diagnostics.zip` on the [releases page](https://github.com/lukasz-gratkowski/diga-archive/releases). The same script is also part of the application: in the folder `diagnostics` beside `Diga.exe` (for an installed copy this is `%LOCALAPPDATA%\Programs\DIGA\diagnostics`, unless you chose another folder).
 
 **How to run it.**
 
@@ -288,7 +288,7 @@ A report is useful even when the script ends with an error, and even when no dev
 
 The project learns which recorders work only from reports. A report that everything worked is as useful as a report of a failure.
 
-1. Open the [issue chooser](https://github.com/lukasz-gratkowski/AmgDigaArchive/issues/new/choose) and pick "Recorder report". You need a free GitHub account. The form is in English; you may write in Polish.
+1. Open the [issue chooser](https://github.com/lukasz-gratkowski/diga-archive/issues/new/choose) and pick "Recorder report". You need a free GitHub account. The form is in English; you may write in Polish.
 2. Fill in "Recorder model and region" (the model is printed on the back of the recorder, for example DMR-BS850EG) and "Application version".
 3. Tick under "What worked?" what worked for you, and describe the rest under "Details": the kind of recordings, anything that was refused and the message shown, and how you checked the saved file.
 4. If something failed, drag the ZIP that the diagnostics kit made into the field "Diagnostics". Attach the ZIP as it is.

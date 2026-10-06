@@ -194,7 +194,7 @@ A report from a real recorder is the most useful test this project can get, whet
 
 1. Install the application on a PC in the same home network as the recorder; see the [user guide](USER-GUIDE.md) and [Recorder setup and troubleshooting](RECORDER-SETUP.md).
 2. Try the steps you can: find the recorder, connect, open a folder, save one recording as an exact copy, save one as an easy-to-play file, play the saved files in a media player.
-3. Open a “Recorder report” on the project's [issues page](https://github.com/lukasz-gratkowski/AmgDigaArchive/issues/new/choose). The form asks for the model and region (the model is printed on the back of the recorder), the application version, what worked, and details.
+3. Open a “Recorder report” on the project's [issues page](https://github.com/lukasz-gratkowski/diga-archive/issues/new/choose). The form asks for the model and region (the model is printed on the back of the recorder), the application version, what worked, and details.
 
 The details make a report useful:
 

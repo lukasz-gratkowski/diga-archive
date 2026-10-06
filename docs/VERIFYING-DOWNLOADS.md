@@ -10,7 +10,7 @@ Every release lists a file `SHA256SUMS.txt` with the SHA-256 fingerprint of each
 Get-FileHash .\DIGA-0.6.0-win-x64-setup.exe -Algorithm SHA256
 ```
 
-Compare the result with the line for that file in `SHA256SUMS.txt` on the release page. Letter case does not matter. If they differ, the download is damaged or is not the published file: delete it and download again from the project's [releases page](https://github.com/lukasz-gratkowski/AmgDigaArchive/releases).
+Compare the result with the line for that file in `SHA256SUMS.txt` on the release page. Letter case does not matter. If they differ, the download is damaged or is not the published file: delete it and download again from the project's [releases page](https://github.com/lukasz-gratkowski/diga-archive/releases).
 
 A matching checksum shows that you have the published file. It does not show who published it; the next two checks do.
 
@@ -35,14 +35,14 @@ Even with a valid signature Windows may show *Windows protected your PC* for a w
 For every release, GitHub records a signed statement that these exact files were produced by this repository's release workflow from the tagged commit. With the [GitHub CLI](https://cli.github.com/) (version 2.67 or later, signed in with `gh auth login`):
 
 ```powershell
-gh attestation verify .\DIGA-0.6.0-win-x64-setup.exe --repo lukasz-gratkowski/AmgDigaArchive
+gh attestation verify .\DIGA-0.6.0-win-x64-setup.exe --repo lukasz-gratkowski/diga-archive
 ```
 
 A stricter form also pins the workflow and the tag:
 
 ```powershell
-gh attestation verify .\DIGA-0.6.0-win-x64-setup.exe --repo lukasz-gratkowski/AmgDigaArchive `
-  --signer-workflow lukasz-gratkowski/AmgDigaArchive/.github/workflows/release.yml --source-ref refs/tags/v0.6.0
+gh attestation verify .\DIGA-0.6.0-win-x64-setup.exe --repo lukasz-gratkowski/diga-archive `
+  --signer-workflow lukasz-gratkowski/diga-archive/.github/workflows/release.yml --source-ref refs/tags/v0.6.0
 ```
 
 The command succeeds only if the file is byte for byte one that the workflow built. It works for all five release files. It proves where a file came from; it is not a statement that the software is free of faults.

@@ -28,16 +28,16 @@ Release files are signed with **Microsoft Azure Artifact Signing** (formerly Tru
 5. **Certificate profile.** On the account: **Certificate profiles** → **Create** → **Public Trust**, choose the completed validation as the verified name. Name: 5 to 100 characters.
 6. **An identity for GitHub.** Microsoft Entra ID → **App registrations** → **New registration** (any name, single tenant, no redirect address). Note its **Application (client) ID** and **Directory (tenant) ID**, and the **Subscription ID** of the subscription.
 7. **Let that identity sign.** Open the certificate profile → **Access control (IAM)** → **Add role assignment** → **Artifact Signing Certificate Profile Signer** → select the app registration from step 6. Assign it on the profile, not on the whole subscription.
-8. **Trust GitHub instead of a password.** In the app registration: **Certificates & secrets** → **Federated credentials** → **Add credential** → scenario **GitHub Actions deploying Azure resources**. Organisation `lukasz-gratkowski`, repository `AmgDigaArchive`, entity type **Environment**, environment name `release-signing`.
+8. **Trust GitHub instead of a password.** In the app registration: **Certificates & secrets** → **Federated credentials** → **Add credential** → scenario **GitHub Actions deploying Azure resources**. Organisation `lukasz-gratkowski`, repository `diga-archive`, entity type **Environment**, environment name `release-signing`.
 
    The *subject* of that credential must equal what GitHub sends, character for character. Repositories created after 15 July 2026 send a subject that contains numeric IDs. Check before saving:
 
    ```powershell
-   gh api repos/lukasz-gratkowski/AmgDigaArchive/actions/oidc/customization/sub
-   gh api repos/lukasz-gratkowski/AmgDigaArchive --jq '.owner.id, .id'
+   gh api repos/lukasz-gratkowski/diga-archive/actions/oidc/customization/sub
+   gh api repos/lukasz-gratkowski/diga-archive --jq '.owner.id, .id'
    ```
 
-   If `use_immutable_subject` is true, the subject is `repo:lukasz-gratkowski@<owner id>/AmgDigaArchive@<repository id>:environment:release-signing`; otherwise `repo:lukasz-gratkowski/AmgDigaArchive:environment:release-signing`. Edit the subject field by hand if the portal's wizard writes the other form. The first signed run prints the subject it actually presented, under *Federated token details* in the Azure sign-in step.
+   If `use_immutable_subject` is true, the subject is `repo:lukasz-gratkowski@<owner id>/diga-archive@<repository id>:environment:release-signing`; otherwise `repo:lukasz-gratkowski/diga-archive:environment:release-signing`. Edit the subject field by hand if the portal's wizard writes the other form. The first signed run prints the subject it actually presented, under *Federated token details* in the Azure sign-in step.
 
 The endpoint for the next section is `https://<region code>.codesigning.azure.net`: `plc` for Poland Central, `weu` for West Europe, `neu` for North Europe.
 

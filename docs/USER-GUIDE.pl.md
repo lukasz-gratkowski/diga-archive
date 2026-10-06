@@ -45,7 +45,7 @@ Przeczytaj to, zanim powierzysz aplikacji nagrania, których niczym nie da się 
 - Projekt nigdy nie uruchomił obsługi Dysku Google na prawdziwych serwerach Google. Konta OneDrive służbowe i szkolne nie były testowane.
 - Wydania nie są jeszcze podpisane cyfrowo; zobacz [Ostrzeżenie systemu Windows](#smartscreen).
 
-Poza tym jednym zgłoszeniem nie wiadomo, które modele nagrywarek działają ani które nagrania nagrywarka udostępnia do zapisania. Jeśli wypróbujesz aplikację, zgłoszenie dotyczące nagrywarki na [stronie zgłoszeń projektu](https://github.com/lukasz-gratkowski/AmgDigaArchive/issues/new/choose) pomoże kolejnym osobom, niezależnie od tego, czy wszystko zadziałało. Formularz zgłoszenia jest po angielsku.
+Poza tym jednym zgłoszeniem nie wiadomo, które modele nagrywarek działają ani które nagrania nagrywarka udostępnia do zapisania. Jeśli wypróbujesz aplikację, zgłoszenie dotyczące nagrywarki na [stronie zgłoszeń projektu](https://github.com/lukasz-gratkowski/diga-archive/issues/new/choose) pomoże kolejnym osobom, niezależnie od tego, czy wszystko zadziałało. Formularz zgłoszenia jest po angielsku.
 
 <a name="install"></a>
 ## Instalacja
@@ -53,7 +53,7 @@ Poza tym jednym zgłoszeniem nie wiadomo, które modele nagrywarek działają an
 <a name="installer"></a>
 ### Instalator
 
-1. Otwórz [najnowsze wydanie](https://github.com/lukasz-gratkowski/AmgDigaArchive/releases/latest) projektu i pobierz plik `DIGA-0.6.0-win-x64-setup.exe`.
+1. Otwórz [najnowsze wydanie](https://github.com/lukasz-gratkowski/diga-archive/releases/latest) projektu i pobierz plik `DIGA-0.6.0-win-x64-setup.exe`.
 2. Uruchom plik. System Windows najpewniej pokaże najpierw ostrzeżenie; zobacz [Ostrzeżenie systemu Windows](#smartscreen).
 3. Wybierz język instalatora: angielski albo polski. To tylko język instalatora. Aplikacja wybiera swój język sama; zobacz [Pierwsze uruchomienie i język](#first-start).
 4. Zaakceptuj licencję. Jest to Powszechna Licencja Publiczna GNU (GNU GPL) w wersji 3, wyświetlana po angielsku.
@@ -720,7 +720,7 @@ Gdy coś pójdzie nie tak, aplikacja zapisuje szczegóły techniczne w dzienniku
 - Rozmiar: dziennik jest niewielki. Gdy przekroczy około pół megabajta, staje się plikiem `errors.previous.log` i zaczyna się nowy. Istnieją tylko te dwa pliki.
 - Dziennik nie opuszcza komputera, chyba że samodzielnie go komuś wyślesz. Przycisk **Usuń dziennik błędów** usuwa oba pliki.
 
-Jeśli zgłaszasz problem na [stronie zgłoszeń projektu](https://github.com/lukasz-gratkowski/AmgDigaArchive/issues/new/choose), pomocne są wiersze dziennika, które go dotyczą. Najpierw je przeczytaj i usuń wszystko, czym nie chcesz się dzielić, na przykład tytuły lub nazwy.
+Jeśli zgłaszasz problem na [stronie zgłoszeń projektu](https://github.com/lukasz-gratkowski/diga-archive/issues/new/choose), pomocne są wiersze dziennika, które go dotyczą. Najpierw je przeczytaj i usuń wszystko, czym nie chcesz się dzielić, na przykład tytuły lub nazwy.
 
 <a name="uninstall"></a>
 ## Odinstalowanie i co po nim zostaje

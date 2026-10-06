@@ -345,9 +345,9 @@ When you choose a link, the application hands the address to Windows, and your d
 
 | Link in the application | Address |
 |---|---|
-| **AMG DIGA Archive · project and releases** | `https://github.com/lukasz-gratkowski/AmgDigaArchive` |
-| **Look for a newer version on the releases page** | `https://github.com/lukasz-gratkowski/AmgDigaArchive/releases` |
-| **Recorder setup and troubleshooting**, **Step-by-step setup guide** | A guide in the same repository, at the address of the installed version: `https://github.com/lukasz-gratkowski/AmgDigaArchive/blob/v<version>/docs/…` |
+| **AMG DIGA Archive · project and releases** | `https://github.com/lukasz-gratkowski/diga-archive` |
+| **Look for a newer version on the releases page** | `https://github.com/lukasz-gratkowski/diga-archive/releases` |
+| **Recorder setup and troubleshooting**, **Step-by-step setup guide** | A guide in the same repository, at the address of the installed version: `https://github.com/lukasz-gratkowski/diga-archive/blob/v<version>/docs/…` |
 | **MediaInfo · library and licence** | `https://mediaarea.net/en/MediaInfo` |
 | **Open the app permissions of your Microsoft account** | `https://account.microsoft.com/privacy/app-access`, or `https://myapps.microsoft.com` for a work or school account |
 | **Open the app permissions of your Google account** | `https://myaccount.google.com/connections` |

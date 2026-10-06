@@ -4,7 +4,7 @@ Thank you for considering it. This is a small project with one maintainer, so th
 
 ## The most valuable help
 
-- **Recorder reports.** The project owns no recorder. Whether the application works with a given model is known only from reports, so please open a “Recorder report” on the [issues page](https://github.com/lukasz-gratkowski/AmgDigaArchive/issues/new/choose), whether it worked or not. If the recorder is found but its folders will not open, run the [diagnostics kit](docs/DLNA-DIAGNOSTICS.md) and attach the ZIP file it makes; it contains no titles, names or addresses. [Testing](docs/TESTING.md#helping-with-a-recorder-report) says what makes a report useful.
+- **Recorder reports.** The project owns no recorder. Whether the application works with a given model is known only from reports, so please open a “Recorder report” on the [issues page](https://github.com/lukasz-gratkowski/diga-archive/issues/new/choose), whether it worked or not. If the recorder is found but its folders will not open, run the [diagnostics kit](docs/DLNA-DIAGNOSTICS.md) and attach the ZIP file it makes; it contains no titles, names or addresses. [Testing](docs/TESTING.md#helping-with-a-recorder-report) says what makes a report useful.
 - **Cloud reports.** Nobody has yet reported connecting or uploading through the application's new built-in Microsoft registration, and the project has never run Google Drive against Google's real servers or tried a work or school OneDrive account. The [README](README.md#how-far-it-has-been-tested) says exactly what is known. A short report of what happened with your kind of account helps. Leave out account addresses, tokens and client secrets.
 - **Bug reports** with the exact message the application showed and the steps that led to it.
 - **Translation fixes.** The English and Polish texts live side by side in `src/Diga.Core/Localization/Resources`.
@@ -16,8 +16,8 @@ Security problems are reported privately; see [SECURITY.md](SECURITY.md).
 You need Windows 11 (x64), the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (the exact version is pinned in `global.json`) and PowerShell 7. [Building](docs/BUILDING.md) has the full instructions; the short version is:
 
 ```powershell
-git clone https://github.com/lukasz-gratkowski/AmgDigaArchive.git
-cd AmgDigaArchive
+git clone https://github.com/lukasz-gratkowski/diga-archive.git
+cd diga-archive
 ./scripts/Build.ps1
 ```
 

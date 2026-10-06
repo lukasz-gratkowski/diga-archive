@@ -55,7 +55,7 @@ Version 0.6.0 has run from start to finish only against the project's recorder e
 
 ### Removed
 
-- **Reading recorder disks and disk images.** The application now saves recordings from a recorder on the home network only. The disk reader, its helper programs, its pages and the restart with administrator rights are gone. The code is kept on the branch [`archive/disk-and-image-sources`](https://github.com/lukasz-gratkowski/AmgDigaArchive/tree/archive/disk-and-image-sources).
+- **Reading recorder disks and disk images.** The application now saves recordings from a recorder on the home network only. The disk reader, its helper programs, its pages and the restart with administrator rights are gone. The code is kept on the branch [`archive/disk-and-image-sources`](https://github.com/lukasz-gratkowski/diga-archive/tree/archive/disk-and-image-sources).
 - **FFmpeg from the installer and the portable package**; see *Changed*.
 
 ### Security

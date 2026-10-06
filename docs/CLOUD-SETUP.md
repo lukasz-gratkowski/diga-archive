@@ -16,7 +16,7 @@ AMG DIGA Archive can upload the recordings it saved to **your own** OneDrive or 
 
 The steps at Microsoft and Google follow Microsoft's and Google's documentation as it read on 3 October 2026: the project has not itself gone through the registration of an own Microsoft application or of a Google client, has not tried a work or school account, and the Google Drive path has so far run only against simulated Google servers in the project's automated tests. What this guide says about the application itself (its pages and messages, how an upload waits and tries again, what **Disconnect** does) is taken from the application's code. The sign-in, upload and listing code is exercised by automated tests against simulated Microsoft and Google servers; apart from the report above, the project has run no sign-in and no upload against the real services.
 
-Portal labels change; where Microsoft's own pages show two generations of a label, both are given. If a step no longer matches what you see, please [open an issue](https://github.com/lukasz-gratkowski/AmgDigaArchive/issues).
+Portal labels change; where Microsoft's own pages show two generations of a label, both are given. If a step no longer matches what you see, please [open an issue](https://github.com/lukasz-gratkowski/diga-archive/issues).
 
 ## Contents
 

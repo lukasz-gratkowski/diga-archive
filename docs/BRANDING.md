@@ -10,7 +10,7 @@ Some technical names are shorter and stay as they are, because installed copies 
 
 | What | Name |
 |---|---|
-| Repository | `AmgDigaArchive` |
+| Repository | `diga-archive` |
 | Program | `Diga.exe` |
 | Installation folder | `%LOCALAPPDATA%\Programs\DIGA` |
 | Folder for settings and saved sign-ins | `%LOCALAPPDATA%\Diga` |

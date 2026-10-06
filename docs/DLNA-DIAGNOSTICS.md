@@ -8,7 +8,7 @@ This document is also the `README.md` inside the kit. That is why its links are 
 
 **Where the kit is.**
 
-- Every release on the [releases page](https://github.com/lukasz-gratkowski/AmgDigaArchive/releases) has a file named `DIGA-…-dlna-diagnostics.zip`. It holds `Run-DlnaDiagnostics.cmd`, `Test-DlnaRecorder.ps1`, this document as `README.md`, `LICENSE`, `BUILDINFO.json` and `SHA256SUMS.txt`.
+- Every release on the [releases page](https://github.com/lukasz-gratkowski/diga-archive/releases) has a file named `DIGA-…-dlna-diagnostics.zip`. It holds `Run-DlnaDiagnostics.cmd`, `Test-DlnaRecorder.ps1`, this document as `README.md`, `LICENSE`, `BUILDINFO.json` and `SHA256SUMS.txt`.
 - The application carries the same two scripts, and this document as `README.md`, in the folder `diagnostics` beside `Diga.exe`. For an installed copy this is `%LOCALAPPDATA%\Programs\DIGA\diagnostics`, unless another folder was chosen.
 
 **What it needs.** A Windows PC connected to the same home network as the recorder. Windows PowerShell 5.1, which is part of Windows, is enough. Nothing is installed, and no administrator rights are needed.
@@ -16,7 +16,7 @@ This document is also the `README.md` inside the kit. That is why its links are 
 ## Run it
 
 1. If you downloaded the ZIP, extract all of it into a new folder. `Run-DlnaDiagnostics.cmd` and `Test-DlnaRecorder.ps1` must stay side by side.
-2. Switch on the recorder and its network server (DLNA), then leave the recorder's settings menus. [Recorder setup and troubleshooting](https://github.com/lukasz-gratkowski/AmgDigaArchive/blob/main/docs/RECORDER-SETUP.md) says where the setting is.
+2. Switch on the recorder and its network server (DLNA), then leave the recorder's settings menus. [Recorder setup and troubleshooting](https://github.com/lukasz-gratkowski/diga-archive/blob/main/docs/RECORDER-SETUP.md) says where the setting is.
 3. Double-click `Run-DlnaDiagnostics.cmd`. A text window opens. The line that begins with `Browse comparison: enabled` confirms that the comparison of two request forms is on.
 4. Answer the script if it asks:
    - Several devices found: it lists their names. Type the number of the recorder and press Enter.
@@ -28,7 +28,7 @@ The report normally appears in a new folder `DlnaDiagnostics` beside the scripts
 
 ## Send the report
 
-Open the [issue chooser](https://github.com/lukasz-gratkowski/AmgDigaArchive/issues/new/choose), pick "Recorder report", and drag the ZIP into the field "Diagnostics". Attach the ZIP as it is. Say which recorder model you have and what the application showed.
+Open the [issue chooser](https://github.com/lukasz-gratkowski/diga-archive/issues/new/choose), pick "Recorder report", and drag the ZIP into the field "Diagnostics". Attach the ZIP as it is. Say which recorder model you have and what the application showed.
 
 Send the report also when the script ended with an error or found no device. A failed run still shows how far the recorder got. The script itself uploads nothing.
 
@@ -41,9 +41,9 @@ Zestaw diagnostyczny to mały skrypt dla systemu Windows. Zadaje nagrywarce te s
 2. Włącz nagrywarkę i jej serwer sieciowy (DLNA), a potem wyjdź z menu ustawień nagrywarki.
 3. Kliknij dwukrotnie plik `Run-DlnaDiagnostics.cmd`. Jeśli skrypt znajdzie kilka urządzeń, wpisz numer nagrywarki i naciśnij Enter. Jeśli znajdzie dokładnie jedno, użyje go bez pytania. Jeśli nie znajdzie żadnego, poprosi o adres opisu urządzenia (`Description URL`). Nie zgaduj go: naciśnij sam Enter.
 4. Poczekaj na wiersz zaczynający się od `Share this sanitized ZIP:`. Podaje on ścieżkę pliku `DlnaDiagnostics-….zip` z raportem.
-5. Dołącz ten plik ZIP do zgłoszenia „Recorder report” na stronie <https://github.com/lukasz-gratkowski/AmgDigaArchive/issues/new/choose>. Formularz jest po angielsku, ale możesz pisać po polsku. Wyślij raport także wtedy, gdy skrypt zakończył się błędem albo nie znalazł żadnego urządzenia.
+5. Dołącz ten plik ZIP do zgłoszenia „Recorder report” na stronie <https://github.com/lukasz-gratkowski/diga-archive/issues/new/choose>. Formularz jest po angielsku, ale możesz pisać po polsku. Wyślij raport także wtedy, gdy skrypt zakończył się błędem albo nie znalazł żadnego urządzenia.
 
-Skrypt nie pobiera nagrań, niczego nie zmienia w nagrywarce ani w systemie Windows i niczego nikomu nie wysyła. Odczytuje tylko najwyższy poziom listy nagrywarki, więc nie pokazuje, czy nagrania w folderach da się zapisać. Więcej po polsku: [Konfiguracja nagrywarki i rozwiązywanie problemów](https://github.com/lukasz-gratkowski/AmgDigaArchive/blob/main/docs/RECORDER-SETUP.pl.md).
+Skrypt nie pobiera nagrań, niczego nie zmienia w nagrywarce ani w systemie Windows i niczego nikomu nie wysyła. Odczytuje tylko najwyższy poziom listy nagrywarki, więc nie pokazuje, czy nagrania w folderach da się zapisać. Więcej po polsku: [Konfiguracja nagrywarki i rozwiązywanie problemów](https://github.com/lukasz-gratkowski/diga-archive/blob/main/docs/RECORDER-SETUP.pl.md).
 
 ## What the kit does
 

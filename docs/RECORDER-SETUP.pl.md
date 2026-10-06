@@ -265,7 +265,7 @@ Podczas pracy aplikacja prosi system Windows, żeby sam nie przechodził w stan 
 
 Zestaw diagnostyczny to mały skrypt dla systemu Windows. Zadaje nagrywarce te same pierwsze pytania co aplikacja i zapisuje, jak nagrywarka odpowiedziała, w postaci niezawierającej niczego prywatnego. Użyj go, gdy nagrywarka nie zostaje znaleziona mimo spełnienia czterech warunków opisanych wyżej, gdy zostaje znaleziona, ale **Połącz z nagrywarką** kończy się błędem, albo gdy chcesz zgłosić, jak zachowuje się dany model. Pełny opis jest w dokumencie [Diagnostics kit](DLNA-DIAGNOSTICS.md); jest on po angielsku i zawiera krótką instrukcję po polsku.
 
-**Skąd go wziąć.** Każde wydanie ma na [stronie wydań](https://github.com/lukasz-gratkowski/AmgDigaArchive/releases) plik o nazwie `DIGA-…-dlna-diagnostics.zip`. Ten sam skrypt jest też częścią aplikacji: w folderze `diagnostics` obok pliku `Diga.exe` (w zainstalowanej kopii to `%LOCALAPPDATA%\Programs\DIGA\diagnostics`, chyba że przy instalacji wybrano inny folder).
+**Skąd go wziąć.** Każde wydanie ma na [stronie wydań](https://github.com/lukasz-gratkowski/diga-archive/releases) plik o nazwie `DIGA-…-dlna-diagnostics.zip`. Ten sam skrypt jest też częścią aplikacji: w folderze `diagnostics` obok pliku `Diga.exe` (w zainstalowanej kopii to `%LOCALAPPDATA%\Programs\DIGA\diagnostics`, chyba że przy instalacji wybrano inny folder).
 
 **Jak go uruchomić.**
 
@@ -288,7 +288,7 @@ Raport przydaje się także wtedy, gdy skrypt zakończy się błędem, a nawet g
 
 O tym, które nagrywarki działają, projekt dowiaduje się wyłącznie ze zgłoszeń. Zgłoszenie, że wszystko zadziałało, jest równie cenne jak zgłoszenie błędu.
 
-1. Otwórz [stronę wyboru zgłoszenia](https://github.com/lukasz-gratkowski/AmgDigaArchive/issues/new/choose) i wybierz „Recorder report”. Potrzebne jest bezpłatne konto GitHub. Formularz jest po angielsku, ale możesz pisać po polsku.
+1. Otwórz [stronę wyboru zgłoszenia](https://github.com/lukasz-gratkowski/diga-archive/issues/new/choose) i wybierz „Recorder report”. Potrzebne jest bezpłatne konto GitHub. Formularz jest po angielsku, ale możesz pisać po polsku.
 2. Wypełnij pola „Recorder model and region” (model jest wydrukowany z tyłu nagrywarki, na przykład DMR-BS850EG) i „Application version”.
 3. W części „What worked?” zaznacz to, co u Ciebie zadziałało, a resztę opisz w polu „Details”: rodzaj nagrań, to, czego aplikacja odmówiła, wraz z pokazanym komunikatem, oraz sposób sprawdzenia zapisanego pliku.
 4. Jeśli coś się nie udało, przeciągnij do pola „Diagnostics” plik ZIP utworzony przez zestaw diagnostyczny. Dołącz go bez zmian.

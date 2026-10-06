@@ -16,7 +16,7 @@ AMG DIGA Archive potrafi przesłać zapisane nagrania na **Twój własny** OneDr
 
 Kroki po stronie Microsoft i Google opierają się na dokumentacji Microsoft i Google w brzmieniu z 3 października 2026 r.: projekt nie przeszedł sam ani rejestracji własnej aplikacji Microsoft, ani tworzenia klienta Google, nie sprawdzał konta służbowego ani szkolnego, a ścieżka Dysku Google była dotąd uruchamiana wyłącznie w testach automatycznych, z symulowanymi serwerami Google. To, co przewodnik mówi o samej aplikacji (jej strony i komunikaty, czekanie i ponawianie prób przy przesyłaniu, działanie przycisku **Rozłącz**), pochodzi z kodu aplikacji. Kod logowania, przesyłania i odczytywania listy plików jest sprawdzany testami automatycznymi z symulowanymi serwerami Microsoft i Google; poza opisanym wyżej zgłoszeniem projekt nie wykonał żadnego logowania ani przesyłania z prawdziwymi usługami.
 
-Nazwy w portalach się zmieniają; tam, gdzie strony Microsoft pokazują dwie generacje nazw, podano obie. Jeśli któryś krok nie zgadza się już z tym, co widzisz, [zgłoś to](https://github.com/lukasz-gratkowski/AmgDigaArchive/issues).
+Nazwy w portalach się zmieniają; tam, gdzie strony Microsoft pokazują dwie generacje nazw, podano obie. Jeśli któryś krok nie zgadza się już z tym, co widzisz, [zgłoś to](https://github.com/lukasz-gratkowski/diga-archive/issues).
 
 Nazwy elementów w portalach Microsoft i Google podano po angielsku. Oba portale tłumaczą swoje nazwy, a tłumaczenia bywają niekonsekwentne, dlatego najłatwiej przejść te kroki po przełączeniu portalu na język angielski.
 

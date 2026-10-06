@@ -6,7 +6,7 @@
 
 AMG DIGA Archive is a free Windows 11 application. It finds the recorder on your home network, shows its recordings, and saves the ones you choose to a folder on your PC, without re-encoding and without changing anything on the recorder. English and Polish. Open source under the GPL.
 
-[![CI](https://github.com/lukasz-gratkowski/AmgDigaArchive/actions/workflows/ci.yml/badge.svg)](https://github.com/lukasz-gratkowski/AmgDigaArchive/actions/workflows/ci.yml)
+[![CI](https://github.com/lukasz-gratkowski/diga-archive/actions/workflows/ci.yml/badge.svg)](https://github.com/lukasz-gratkowski/diga-archive/actions/workflows/ci.yml)
 
 *Po polsku: [krótki opis i przewodniki](#po-polsku).*
 
@@ -27,7 +27,7 @@ AMG DIGA Archive is a free Windows 11 application. It finds the recorder on your
 ## What it does not do
 
 - It does not decrypt or copy **protected** recordings. A recording that the recorder marks as copy-protected, or offers only in a converted version, is listed with that reason and cannot be saved.
-- It does not read recorder **disks**. An earlier, experimental disk reader is kept on the branch [`archive/disk-and-image-sources`](https://github.com/lukasz-gratkowski/AmgDigaArchive/tree/archive/disk-and-image-sources).
+- It does not read recorder **disks**. An earlier, experimental disk reader is kept on the branch [`archive/disk-and-image-sources`](https://github.com/lukasz-gratkowski/diga-archive/tree/archive/disk-and-image-sources).
 - It does not contain **FFmpeg**. The easy-to-play file and the preview need it; the installer and the application offer to download it. See [Install](#install).
 - It is **not a Panasonic product**. See [Licence and trademarks](#licence-and-trademarks).
 
@@ -42,13 +42,13 @@ Please read this before relying on the application for recordings you cannot rep
 - **Not tried by the project:** other recorder models, asking a real recorder by its address, DVB subtitles from a real broadcast, Google Drive against Google's real servers, and work or school OneDrive accounts.
 - **Releases are not digitally signed yet.** See [Install](#install).
 
-Whether a recorder offers a recording for saving at all depends on the model, its firmware and the recording. If you try the application, a [recorder report](https://github.com/lukasz-gratkowski/AmgDigaArchive/issues/new/choose) helps everyone after you, whether it worked or not.
+Whether a recorder offers a recording for saving at all depends on the model, its firmware and the recording. If you try the application, a [recorder report](https://github.com/lukasz-gratkowski/diga-archive/issues/new/choose) helps everyone after you, whether it worked or not.
 
 ## Install
 
 **You need** Windows 11 (64-bit) and a recorder that is switched on and connected to the same home network as the PC, with its network server (DLNA) switched on. [Recorder setup and troubleshooting](docs/RECORDER-SETUP.md) says how.
 
-1. Open the [latest release](https://github.com/lukasz-gratkowski/AmgDigaArchive/releases/latest).
+1. Open the [latest release](https://github.com/lukasz-gratkowski/diga-archive/releases/latest).
 2. Download `DIGA-…-win-x64-setup.exe` and start it. It installs for your Windows account only and asks for no administrator rights. If you prefer no installer, download `DIGA-…-win-x64-portable.zip`, unpack it anywhere and start `Diga.exe`.
 3. Leave the option that begins **Download FFmpeg** ticked if you want to save recordings as MKV, MP4 or MPEG, or to use the preview. FFmpeg is a separate free program. The installer fetches one specific version from its distributor and uses it only if its SHA-256 checksum is the expected one. Exact copies work without FFmpeg, and you can download it later in **Settings**.
 
@@ -111,8 +111,8 @@ The application has no telemetry, does not look for updates and has no server of
 You need Windows 11 (x64), the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) and PowerShell 7:
 
 ```powershell
-git clone https://github.com/lukasz-gratkowski/AmgDigaArchive.git
-cd AmgDigaArchive
+git clone https://github.com/lukasz-gratkowski/diga-archive.git
+cd diga-archive
 ./scripts/Build.ps1
 ```
 
@@ -139,7 +139,7 @@ OneDrive nie wymaga żadnej konfiguracji, bo aplikacja ma wbudowaną rejestracj�
 - [Instrukcja użytkownika](docs/USER-GUIDE.pl.md)
 - [Konfiguracja nagrywarki i rozwiązywanie problemów](docs/RECORDER-SETUP.pl.md)
 - [Konfiguracja chmury: OneDrive lub Dysk Google](docs/CLOUD-SETUP.pl.md)
-- [Pobieranie](https://github.com/lukasz-gratkowski/AmgDigaArchive/releases/latest): plik `DIGA-…-win-x64-setup.exe`
+- [Pobieranie](https://github.com/lukasz-gratkowski/diga-archive/releases/latest): plik `DIGA-…-win-x64-setup.exe`
 
 ### Na ile aplikacja została sprawdzona
 

@@ -9,7 +9,7 @@ Only the latest release receives fixes. Please update before reporting a problem
 Please report security problems privately, not in a public issue:
 
 1. Open the repository's “Security” tab on GitHub.
-2. Choose “Report a vulnerability” and describe the problem. This link opens the form directly: [report a vulnerability](https://github.com/lukasz-gratkowski/AmgDigaArchive/security/advisories/new).
+2. Choose “Report a vulnerability” and describe the problem. This link opens the form directly: [report a vulnerability](https://github.com/lukasz-gratkowski/diga-archive/security/advisories/new).
 
 Include the application version (shown in **Settings**, in the section **About AMG DIGA Archive**), what you did, what happened, and what you expected. A proof of concept helps. Do not attach recordings, sign-in tokens, client secrets or unedited logs. The application's error log can name folders, recording titles and the recorder's address.
 

@@ -5,7 +5,7 @@ namespace Diga.App;
 /// <summary>The addresses the application opens in the browser, in one place so that a renamed repository needs one change.</summary>
 internal static class Links
 {
-    public const string Project = "https://github.com/lukasz-gratkowski/AmgDigaArchive";
+    public const string Project = "https://github.com/lukasz-gratkowski/diga-archive";
     public const string Releases = Project + "/releases";
     public const string MediaInfo = "https://mediaarea.net/en/MediaInfo";
     // Where a person withdraws the permission given to an application: the provider's own page, not something this application can do.

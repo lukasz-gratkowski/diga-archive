@@ -22,8 +22,8 @@ One thing is not established. The project's CI builds with the `dotnet` command 
 ## The short way
 
 ```powershell
-git clone https://github.com/lukasz-gratkowski/AmgDigaArchive.git
-cd AmgDigaArchive
+git clone https://github.com/lukasz-gratkowski/diga-archive.git
+cd diga-archive
 ./scripts/Build.ps1
 ```
 

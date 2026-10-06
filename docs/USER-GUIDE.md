@@ -45,7 +45,7 @@ Please read this before you rely on the application for recordings you cannot re
 - Google Drive has never been run against Google's real servers by the project. Work or school OneDrive accounts are untested.
 - Releases are not digitally signed yet; see [The Windows warning](#smartscreen).
 
-Which recorder models work, and which recordings a recorder offers for saving, is not known beyond that one report. If you try the application, a recorder report on the project's [issues page](https://github.com/lukasz-gratkowski/AmgDigaArchive/issues/new/choose) helps the people after you, whether it worked or not.
+Which recorder models work, and which recordings a recorder offers for saving, is not known beyond that one report. If you try the application, a recorder report on the project's [issues page](https://github.com/lukasz-gratkowski/diga-archive/issues/new/choose) helps the people after you, whether it worked or not.
 
 <a name="install"></a>
 ## Installing
@@ -53,7 +53,7 @@ Which recorder models work, and which recordings a recorder offers for saving, i
 <a name="installer"></a>
 ### The installer
 
-1. Open the project's [latest release](https://github.com/lukasz-gratkowski/AmgDigaArchive/releases/latest) and download `DIGA-0.6.0-win-x64-setup.exe`.
+1. Open the project's [latest release](https://github.com/lukasz-gratkowski/diga-archive/releases/latest) and download `DIGA-0.6.0-win-x64-setup.exe`.
 2. Start the file. Windows will probably show a warning first; see [The Windows warning](#smartscreen).
 3. Choose the language of the installer, English or Polish. This is the language of the installer only. The application chooses its own; see [First start and language](#first-start).
 4. Accept the licence. It is the GNU General Public License, version 3, shown in English.
@@ -720,7 +720,7 @@ When something goes wrong, the application writes the technical details to an er
 - Size: the log is kept small. When it passes about half a megabyte it becomes `errors.previous.log` and a new one is begun. Only these two files exist.
 - It never leaves the PC unless you send it to someone yourself. **Delete the error log** removes both files.
 
-If you report a problem on the project's [issues page](https://github.com/lukasz-gratkowski/AmgDigaArchive/issues/new/choose), the lines of the log that belong to it help. Read them first and take out anything you do not want to share, such as titles or names.
+If you report a problem on the project's [issues page](https://github.com/lukasz-gratkowski/diga-archive/issues/new/choose), the lines of the log that belong to it help. Read them first and take out anything you do not want to share, such as titles or names.
 
 <a name="uninstall"></a>
 ## Uninstalling, and what stays
