@@ -2,7 +2,7 @@
 
 This branch keeps the last state of AMG DIGA Archive that could read a Panasonic recorder's hard disk, a USB disk or a disk image. It is version 0.5.2, a development prerelease that was not published.
 
-From version 0.6.0 on, the application saves recordings from a recorder on the home network only, and the disk reader is no longer part of it. The current application is on the [`main` branch](https://github.com/lukasz-gratkowski/AmgDigaArchive).
+From version 0.6.0 on, the application saves recordings from a recorder on the home network only, and the disk reader is no longer part of it. The current application is on the [`main` branch](https://github.com/lukasz-gratkowski/diga-archive).
 
 ## What is here
 
