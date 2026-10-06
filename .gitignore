@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+.vs/
+artifacts/
+TestResults/
+tools/bin/
+tools/downloads/
+*.user
+*.log
+*.pfx
+*.img
+*.dd
+*.raw

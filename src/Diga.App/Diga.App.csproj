@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.22000.0</TargetPlatformMinVersion>
+    <RootNamespace>Diga.App</RootNamespace>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <WindowsAppSdkBootstrapInitialize>false</WindowsAppSdkBootstrapInitialize>
+    <SelfContained>true</SelfContained>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishSingleFile>false</PublishSingleFile>
+    <ApplicationIcon>Assets\Diga.ico</ApplicationIcon>
+    <AssemblyName>Diga</AssemblyName>
+    <Product>AMG DIGA Archive</Product>
+    <Description>Preserve Panasonic recorder video without transcoding.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
+    <ProjectReference Include="..\Diga.Core\Diga.Core.csproj" />
+    <Content Include="Assets\Diga.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Assets\BrandMark.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Assets\Diga.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\tools\bin\**\*" Link="tools\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <!-- WinUI's unpackaged build copies generated XAML resources to TargetDir,
+       but the .NET publish pipeline does not automatically retain them.
+       Track them as publish items for custom output paths and no-build publishing.
+       See microsoft/WindowsAppSDK issues #6720 and #6394. -->
+  <Target Name="IncludeDigaXamlResourcesInPublish" AfterTargets="ComputeFilesToPublish">
+    <Error Condition="!Exists('$(TargetDir)App.xbf')" Text="The generated App.xbf is missing from $(TargetDir). Build the WinUI app before publishing." />
+    <Error Condition="!Exists('$(TargetDir)$(AssemblyName).pri')" Text="The generated $(AssemblyName).pri is missing from $(TargetDir). Build the WinUI app before publishing." />
+    <ItemGroup>
+      <_DigaXamlPublishFile Include="$(TargetDir)**\*.xbf;$(TargetDir)$(AssemblyName).pri" Exclude="$(TargetDir)publish\**\*" />
+      <ResolvedFileToPublish Include="@(_DigaXamlPublishFile)" Exclude="@(ResolvedFileToPublish)">
+        <RelativePath>%(_DigaXamlPublishFile.RecursiveDir)%(_DigaXamlPublishFile.Filename)%(_DigaXamlPublishFile.Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+</Project>
