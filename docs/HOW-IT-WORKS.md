@@ -2,7 +2,7 @@
 
 This document explains what happens between a click and a saved file: how the application finds a recorder, how it reads the recorder's lists, how it decides whether a recording can be saved, how a file is written and checked, and how an upload to the cloud is sent. It is written for a curious user, and for a reviewer who wants to compare the claims with the code.
 
-It describes version 0.6.1. The statements are taken from the source code, and each section names the files it describes. Where a statement comes from Microsoft's or Google's documentation, the text says so. What has been tried on real equipment, and what has not, is in [What was tested, and what was not](#tested).
+It describes version 0.6.2. The statements are taken from the source code, and each section names the files it describes. Where a statement comes from Microsoft's or Google's documentation, the text says so. What has been tried on real equipment, and what has not, is in [What was tested, and what was not](#tested).
 
 For using the application, read the [user guide](USER-GUIDE.md). For the recorder's own settings, read [Recorder setup and troubleshooting](RECORDER-SETUP.md). What the application stores and sends is listed in [Privacy](PRIVACY.md). How the code is organised is in [Architecture](ARCHITECTURE.md).
 
@@ -528,7 +528,7 @@ One file that fails does not stop the others. Files that were not uploaded stay 
 - **Automated tests.** They run against simulated recorders, against simulated Microsoft and Google servers, and against the real FFmpeg and MediaInfo with generated test video. They never contact a real recorder, Microsoft or Google.
 - **Real hardware: one report.** The owner of a recorder reported as a DMR-BS850 confirmed on 2 October 2026 that version 0.5.2 found the recorder, opened its folders and saved recordings both as exact copies (`.mpg`) and as MKV, and that connecting OneDrive with the built-in registration and uploading worked.
 - **The built-in Microsoft registration changed after that report.** The report was made with the earlier built-in registration. On 5 October 2026 the application got a new one, application ID `bfd21bf0-32a9-4520-8bbb-d525e3d34aea` (the constant `AppSettings.BuiltInOneDriveClientId`). Nobody has reported connecting or uploading through the new registration yet. The only thing checked for it is that Microsoft's sign-in service knows the ID and accepts the `http://localhost` redirect. That was checked without signing in. A sign-in saved with the earlier built-in ID is not used by the new one: you connect once more.
-- **Versions 0.6.0 and 0.6.1** have run from start to finish only against the project's recorder emulator (`tests/fixtures/dlna_emulator.py`), not against a real recorder.
+- **Versions 0.6.0 to 0.6.2** have run from start to finish only against the project's recorder emulator (`tests/fixtures/dlna_emulator.py`), not against a real recorder.
 - **Google Drive** has never been run against Google's real servers by the project.
 - **Work or school OneDrive accounts** are untested.
 - **Other recorder models** are untested. Which recordings a recorder offers for saving is not known beyond the one report.

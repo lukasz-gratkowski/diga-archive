@@ -4,7 +4,7 @@
 
 AMG DIGA Archive is an application for Windows 11. It saves recordings from a Panasonic DIGA recorder to your PC over the home network, and it can upload the saved files to your own OneDrive or Google Drive. It never writes to the recorder, and it never replaces a file that already exists.
 
-This guide describes version 0.6.1 and follows the window as you see it. Names in **bold** are shown by the application or by its installer. Names shown by Windows itself are in “quotation marks”. The project is independent of Panasonic.
+This guide describes version 0.6.2 and follows the window as you see it. Names in **bold** are shown by the application or by its installer. Names shown by Windows itself are in “quotation marks”. The project is independent of Panasonic.
 
 ## Contents
 
@@ -41,7 +41,7 @@ Please read this before you rely on the application for recordings you cannot re
 - The project's automated tests run against simulated recorders, against simulated Microsoft and Google servers, and against the real FFmpeg and MediaInfo.
 - On real hardware there is one report. The owner of a recorder reported as a DMR-BS850 confirmed on 2 October 2026 that version 0.5.2 found the recorder, opened its folders and saved recordings both as exact copies (`.mpg`) and as MKV, and that connecting OneDrive with the built-in registration and uploading worked.
 - That OneDrive report was made with the earlier built-in Microsoft registration. On 5 October 2026 the application got a new built-in registration (application ID `bfd21bf0-32a9-4520-8bbb-d525e3d34aea`), and version 0.6.0 uses it. Nobody has reported connecting or uploading through the new registration yet. The only thing checked for it is that Microsoft's sign-in service knows the ID and accepts the `http://localhost` redirect, which is the address through which a sign-in comes back to the application. This was checked without signing in.
-- Versions 0.6.0 and 0.6.1 have run from start to finish only against the project's recorder emulator, not against a real recorder.
+- Versions 0.6.0 to 0.6.2 have run from start to finish only against the project's recorder emulator, not against a real recorder.
 - Google Drive has never been run against Google's real servers by the project. Work or school OneDrive accounts are untested.
 - Releases are not digitally signed yet; see [The Windows warning](#smartscreen).
 
@@ -53,7 +53,7 @@ Which recorder models work, and which recordings a recorder offers for saving, i
 <a name="installer"></a>
 ### The installer
 
-1. Open the project's [latest release](https://github.com/lukasz-gratkowski/diga-archive/releases/latest) and download `DIGA-0.6.1-win-x64-setup.exe`.
+1. Open the project's [latest release](https://github.com/lukasz-gratkowski/diga-archive/releases/latest) and download `DIGA-0.6.2-win-x64-setup.exe`.
 2. Start the file. Windows will probably show a warning first; see [The Windows warning](#smartscreen).
 3. Choose the language of the installer, English or Polish. This is the language of the installer only. The application chooses its own; see [First start and language](#first-start).
 4. Accept the licence. It is the GNU General Public License, version 3, shown in English.
@@ -85,7 +85,7 @@ FFmpeg is a separate, free program for handling video. It is not part of the app
 
 Exact copies, the technical details of a recording and cloud upload work without FFmpeg.
 
-If you leave the option ticked, the installer downloads one specific FFmpeg package from the GitHub releases of its distributor, Gyan Doshi, or from gyan.dev if that fails. For version 0.6.1 this is FFmpeg 9.0.2, a download of about 110 MB. The installer uses the download only if its SHA-256 checksum equals the one recorded in the installer, and it installs only the two programs `ffmpeg.exe` and `ffprobe.exe` with their licence texts. FFmpeg is licensed under the GNU GPL version 3.
+If you leave the option ticked, the installer downloads one specific FFmpeg package from the GitHub releases of its distributor, Gyan Doshi, or from gyan.dev if that fails. For version 0.6.2 this is FFmpeg 9.0.2, a download of about 110 MB. The installer uses the download only if its SHA-256 checksum equals the one recorded in the installer, and it installs only the two programs `ffmpeg.exe` and `ffprobe.exe` with their licence texts. FFmpeg is licensed under the GNU GPL version 3.
 
 - If the download fails, the installer says why and installs the application without FFmpeg.
 - If you cancel the download, the installer asks whether to install without FFmpeg.
@@ -96,7 +96,7 @@ You can add FFmpeg at any time later. In the application open **Settings**, then
 <a name="portable"></a>
 ### The portable ZIP
 
-If you prefer no installer, download `DIGA-0.6.1-win-x64-portable.zip`, unpack it to a folder of your choice and start `Diga.exe`. Windows may show the same warning as for the installer.
+If you prefer no installer, download `DIGA-0.6.2-win-x64-portable.zip`, unpack it to a folder of your choice and start `Diga.exe`. Windows may show the same warning as for the installer.
 
 - The package holds the same application. It does not hold FFmpeg; download it in **Settings** under **Media tools · advanced**.
 - “Portable” means only that nothing is installed. The application still keeps its settings, saved sign-ins, temporary files and error log in your Windows profile; see [Where the application keeps its own data](#data).
@@ -122,7 +122,7 @@ After an update the application may also say **FFmpeg update available**; see [F
 This part is for people who install without the wizard, for example from a script. The installer is made with Inno Setup and accepts its standard switches.
 
 ```bat
-DIGA-0.6.1-win-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LANG=en
+DIGA-0.6.2-win-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LANG=en
 ```
 
 | Switch | Effect |

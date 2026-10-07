@@ -4,7 +4,7 @@
 
 AMG DIGA Archive to aplikacja dla systemu Windows 11. Zapisuje na komputerze nagrania z nagrywarki Panasonic DIGA, korzystając z sieci domowej, i może przesłać zapisane pliki na Twój własny OneDrive lub Dysk Google. Nigdy niczego nie zapisuje na nagrywarce i nigdy nie zastępuje pliku, który już istnieje.
 
-Instrukcja opisuje wersję 0.6.1 i prowadzi przez okno aplikacji w takiej kolejności, w jakiej je widzisz. Nazwy **pogrubione** pokazuje aplikacja albo jej instalator. Nazwy pokazywane przez sam system Windows są w „cudzysłowie”. Projekt jest niezależny od firmy Panasonic.
+Instrukcja opisuje wersję 0.6.2 i prowadzi przez okno aplikacji w takiej kolejności, w jakiej je widzisz. Nazwy **pogrubione** pokazuje aplikacja albo jej instalator. Nazwy pokazywane przez sam system Windows są w „cudzysłowie”. Projekt jest niezależny od firmy Panasonic.
 
 ## Spis treści
 
@@ -41,7 +41,7 @@ Przeczytaj to, zanim powierzysz aplikacji nagrania, których niczym nie da się 
 - Testy automatyczne projektu działają na symulowanych nagrywarkach, na symulowanych serwerach Microsoft i Google oraz na prawdziwych programach FFmpeg i MediaInfo.
 - Z prawdziwego sprzętu pochodzi jedno zgłoszenie. Właściciel nagrywarki zgłoszonej jako DMR-BS850 potwierdził 2 października 2026 r., że wersja 0.5.2 znalazła nagrywarkę, otworzyła jej foldery i zapisała nagrania zarówno jako dokładne kopie (`.mpg`), jak i jako pliki MKV, oraz że połączenie z OneDrive przez wbudowaną rejestrację i przesyłanie plików zadziałały.
 - Połączenie z OneDrive i przesyłanie, o których mówi to zgłoszenie, wykonano przez wcześniejszą wbudowaną rejestrację Microsoft. 5 października 2026 r. aplikacja otrzymała nową wbudowaną rejestrację (identyfikator aplikacji `bfd21bf0-32a9-4520-8bbb-d525e3d34aea`) i wersja 0.6.0 korzysta właśnie z niej. Nikt jeszcze nie zgłosił, że połączył się albo przesłał pliki przez nową rejestrację. Sprawdzono dla niej tylko to, że usługa logowania Microsoft zna ten identyfikator i przyjmuje przekierowanie na adres `http://localhost`, czyli adres, pod którym logowanie wraca do aplikacji. Sprawdzono to bez logowania się.
-- Wersje 0.6.0 i 0.6.1 przeszły całą drogę od początku do końca wyłącznie z emulatorem nagrywarki należącym do projektu, a nie z prawdziwą nagrywarką.
+- Wersje od 0.6.0 do 0.6.2 przeszły całą drogę od początku do końca wyłącznie z emulatorem nagrywarki należącym do projektu, a nie z prawdziwą nagrywarką.
 - Projekt nigdy nie uruchomił obsługi Dysku Google na prawdziwych serwerach Google. Konta OneDrive służbowe i szkolne nie były testowane.
 - Wydania nie są jeszcze podpisane cyfrowo; zobacz [Ostrzeżenie systemu Windows](#smartscreen).
 
@@ -53,7 +53,7 @@ Poza tym jednym zgłoszeniem nie wiadomo, które modele nagrywarek działają an
 <a name="installer"></a>
 ### Instalator
 
-1. Otwórz [najnowsze wydanie](https://github.com/lukasz-gratkowski/diga-archive/releases/latest) projektu i pobierz plik `DIGA-0.6.1-win-x64-setup.exe`.
+1. Otwórz [najnowsze wydanie](https://github.com/lukasz-gratkowski/diga-archive/releases/latest) projektu i pobierz plik `DIGA-0.6.2-win-x64-setup.exe`.
 2. Uruchom plik. System Windows najpewniej pokaże najpierw ostrzeżenie; zobacz [Ostrzeżenie systemu Windows](#smartscreen).
 3. Wybierz język instalatora: angielski albo polski. To tylko język instalatora. Aplikacja wybiera swój język sama; zobacz [Pierwsze uruchomienie i język](#first-start).
 4. Zaakceptuj licencję. Jest to Powszechna Licencja Publiczna GNU (GNU GPL) w wersji 3, wyświetlana po angielsku.
@@ -85,7 +85,7 @@ FFmpeg to osobny, bezpłatny program do obróbki wideo. Nie jest częścią apli
 
 Dokładne kopie, szczegóły techniczne nagrania i przesyłanie do chmury działają bez FFmpeg.
 
-Jeśli zostawisz opcję zaznaczoną, instalator pobierze jeden, ściśle określony pakiet FFmpeg z wydań jego dystrybutora, Gyana Doshiego, w serwisie GitHub, a jeśli to się nie uda, z gyan.dev. Dla wersji 0.6.1 jest to FFmpeg 9.0.2; pobierany plik ma około 110 MB. Instalator użyje pobranego pliku tylko wtedy, gdy jego suma kontrolna SHA-256 zgadza się z sumą zapisaną w instalatorze, i zainstaluje wyłącznie dwa programy, `ffmpeg.exe` i `ffprobe.exe`, wraz z tekstami licencji. FFmpeg jest objęty licencją GNU GPL w wersji 3.
+Jeśli zostawisz opcję zaznaczoną, instalator pobierze jeden, ściśle określony pakiet FFmpeg z wydań jego dystrybutora, Gyana Doshiego, w serwisie GitHub, a jeśli to się nie uda, z gyan.dev. Dla wersji 0.6.2 jest to FFmpeg 9.0.2; pobierany plik ma około 110 MB. Instalator użyje pobranego pliku tylko wtedy, gdy jego suma kontrolna SHA-256 zgadza się z sumą zapisaną w instalatorze, i zainstaluje wyłącznie dwa programy, `ffmpeg.exe` i `ffprobe.exe`, wraz z tekstami licencji. FFmpeg jest objęty licencją GNU GPL w wersji 3.
 
 - Jeśli pobieranie się nie uda, instalator poda przyczynę i zainstaluje aplikację bez FFmpeg.
 - Jeśli anulujesz pobieranie, instalator zapyta, czy zainstalować aplikację bez FFmpeg.
@@ -96,7 +96,7 @@ FFmpeg możesz dodać w dowolnej chwili później. W aplikacji otwórz **Ustawie
 <a name="portable"></a>
 ### Wersja przenośna (ZIP)
 
-Jeśli wolisz obejść się bez instalatora, pobierz plik `DIGA-0.6.1-win-x64-portable.zip`, rozpakuj go do wybranego folderu i uruchom `Diga.exe`. System Windows może pokazać to samo ostrzeżenie co przy instalatorze.
+Jeśli wolisz obejść się bez instalatora, pobierz plik `DIGA-0.6.2-win-x64-portable.zip`, rozpakuj go do wybranego folderu i uruchom `Diga.exe`. System Windows może pokazać to samo ostrzeżenie co przy instalatorze.
 
 - Pakiet zawiera tę samą aplikację. Nie zawiera FFmpeg; pobierz go na stronie **Ustawienia**, w sekcji **Narzędzia multimedialne · zaawansowane**.
 - „Przenośna” znaczy tylko tyle, że nic nie jest instalowane. Aplikacja nadal przechowuje ustawienia, zapisane logowania, pliki tymczasowe i dziennik błędów w Twoim profilu Windows; zobacz [Gdzie aplikacja przechowuje własne dane](#data).
@@ -122,7 +122,7 @@ Po aktualizacji aplikacja może też pokazać komunikat **Dostępna aktualizacja
 Ta część jest dla osób, które instalują bez kreatora, na przykład skryptem. Instalator przygotowano w programie Inno Setup i przyjmuje on jego standardowe przełączniki.
 
 ```bat
-DIGA-0.6.1-win-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LANG=pl
+DIGA-0.6.2-win-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LANG=pl
 ```
 
 | Przełącznik | Działanie |

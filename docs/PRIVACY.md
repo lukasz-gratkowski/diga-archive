@@ -2,7 +2,7 @@
 
 This document lists everything the application keeps on your PC, every address it contacts and when, what uninstalling removes, and how to take back the access you gave it to your cloud storage.
 
-It describes version 0.6.1 and is taken from the source code. Each part names the files it is based on, so that the statements can be checked. It covers what the application's own code does. What Windows, your browser, your recorder, Microsoft and Google do with what reaches them is theirs to describe.
+It describes version 0.6.2 and is taken from the source code. Each part names the files it is based on, so that the statements can be checked. It covers what the application's own code does. What Windows, your browser, your recorder, Microsoft and Google do with what reaches them is theirs to describe.
 
 ## Contents
 

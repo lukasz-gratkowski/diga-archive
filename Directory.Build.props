@@ -4,7 +4,7 @@
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(Configuration)' == 'Release'">true</ContinuousIntegrationBuild>
     <AnalysisLevel>latest</AnalysisLevel>
-    <Version>0.6.1</Version>
+    <Version>0.6.2</Version>
     <Authors>DIGA contributors</Authors>
     <Copyright>Copyright © 2026 DIGA contributors</Copyright>
     <!-- The packages.lock.json beside each project records the exact version and content hash of every package, direct or
