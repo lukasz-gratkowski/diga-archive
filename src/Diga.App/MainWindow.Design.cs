@@ -130,16 +130,24 @@ public sealed partial class MainWindow
         var selected = DlnaSelectionCount;
         var preserved = SavedCount > _exportsAtSourceOpen;
         var ordered = _orderNumber.Length > 0;
+        // State is what is shown; Whole is the same with the order number in full, for a screen reader and for the tooltip.
         var steps = new[]
         {
-            (Page: "order", Title: L.T("Design.Stage.Order"), Tone: "Coral", Done: ordered, State: ordered ? L.T("Design.OrderSet", _orderNumber) : L.T("Design.OrderMissing")),
-            (Page: "source", Title: L.T("Design.Stage.Connect"), Tone: "Teal", Done: sourceReady, State: sourceReady ? sourceLabel : L.T("Design.ChooseSource")),
-            (Page: "library", Title: L.T("Design.Stage.Discover"), Tone: "Violet", Done: selected > 0, State: selected > 0 ? L.Plural("Design.Selected", selected) : sourceReady ? L.T("Design.ExploreVideos") : L.T("Design.OpenSourceFirst")),
-            (Page: "export", Title: L.T("Design.Stage.Preserve"), Tone: "Amber", Done: preserved, State: preserved ? L.T("Design.CopiesCreated") : selected > 0 ? L.T("Design.ReadyToExport") : L.T("Design.ChooseVideosFirst")),
-            (Page: "complete", Title: L.T("Design.Stage.Archive"), Tone: "Coral", Done: SavedCount > 0, State: SavedCount > 0 ? L.Plural("Design.SavedThisSession", SavedCount) : L.T("Design.CopiesAppearHere"))
+            (Page: "order", Title: L.T("Design.Stage.Order"), Tone: "Coral", Done: ordered, State: ordered ? L.T("Design.OrderSet", ShownOrderNumber(_orderNumber)) : L.T("Design.OrderMissing"),
+                Whole: ordered ? L.T("Design.OrderSet", _orderNumber) : L.T("Design.OrderMissing")),
+            (Page: "source", Title: L.T("Design.Stage.Connect"), Tone: "Teal", Done: sourceReady, State: sourceReady ? sourceLabel : L.T("Design.ChooseSource"), Whole: ""),
+            (Page: "library", Title: L.T("Design.Stage.Discover"), Tone: "Violet", Done: selected > 0, State: selected > 0 ? L.Plural("Design.Selected", selected) : sourceReady ? L.T("Design.ExploreVideos") : L.T("Design.OpenSourceFirst"), Whole: ""),
+            (Page: "export", Title: L.T("Design.Stage.Preserve"), Tone: "Amber", Done: preserved, State: preserved ? L.T("Design.CopiesCreated") : selected > 0 ? L.T("Design.ReadyToExport") : L.T("Design.ChooseVideosFirst"), Whole: ""),
+            (Page: "complete", Title: L.T("Design.Stage.Archive"), Tone: "Coral", Done: SavedCount > 0, State: SavedCount > 0 ? L.Plural("Design.SavedThisSession", SavedCount) : L.T("Design.CopiesAppearHere"), Whole: "")
         };
         foreach (var step in steps)
-            if (_navigationStates.TryGetValue(step.Page, out var state)) state.Text = step.State;
+            if (_navigationStates.TryGetValue(step.Page, out var state))
+            {
+                state.Text = step.State;
+                // The entry of the menu says its step; with a shortened order number it also says the whole number.
+                if (_navigation.MenuItems.OfType<NavigationViewItem>().FirstOrDefault(item => Equals(item.Tag, step.Page)) is { } entry)
+                    ToolTipService.SetToolTip(entry, step.Whole.Length > 0 && step.Whole != step.State ? step.Title + " · " + step.Whole : step.Title);
+            }
         if (_journeyHost is null) return;
         // While a page is shown only the words change: the order number as it is typed, the count of ticked recordings. The
         // buttons stay and get their new words. Making them anew for every keystroke made the whole strip flicker and move.
@@ -167,14 +175,21 @@ public sealed partial class MainWindow
                 Grid.SetColumn(title, 1);
                 heading.Children.Add(title);
                 // Two lines at most: a long order number ends in an ellipsis instead of making the strip taller with every character.
-                var detail = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis };
+                // On the page where the number is typed the room for both lines is there from the start, so the strip keeps its
+                // height whatever is typed.
+                var detail = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis,
+                    MinHeight = _page == "order" ? 32 : 0 };
+                // All buttons of a row are as tall as the tallest, with their words at the top: one whose second line comes or
+                // goes then changes nothing around it.
                 var button = new Button
                 {
                     Content = new StackPanel { Spacing = 6, Children = { heading, detail } },
                     HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Left,
+                    VerticalAlignment = VerticalAlignment.Stretch, VerticalContentAlignment = VerticalAlignment.Top,
                     Tag = new JourneyParts(step.Page, mark, detail)
                 };
-                detail.IsTextTrimmedChanged += (sender, _) => ToolTipService.SetToolTip(button, sender.IsTextTrimmed ? sender.Text : null);
+                // Whatever is not shown in full, cut off at the end of the second line or shortened beforehand, is in the tooltip.
+                detail.IsTextTrimmedChanged += (_, _) => ShowJourneyTooltip(button);
                 var page = step.Page;
                 button.Click += (_, _) => Navigate(page);
                 _journeyHost.Children.Add(button);
@@ -190,13 +205,16 @@ public sealed partial class MainWindow
             if (parts.Mark.Text != mark) parts.Mark.Text = mark;
             var detail = current ? L.T("Design.CurrentState", step.State) : step.State;
             if (parts.Detail.Text != detail) parts.Detail.Text = detail;
+            var whole = step.Whole.Length > 0 ? step.Whole : step.State;
+            parts.Whole = current ? L.T("Design.CurrentState", whole) : whole;
+            ShowJourneyTooltip(button);
             var style = AppStyle(current ? $"Diga{step.Tone}ButtonStyle" : "DigaJourneyButtonStyle");
             if (!ReferenceEquals(button.Style, style)) button.Style = style;
             var accessibilityState = string.Join(" ", new[]
             {
                 current ? L.T("Design.CurrentStepAccessible") : null,
                 step.Done ? L.T("Design.CompletedAccessible") : null,
-                step.State + "."
+                (step.Whole.Length > 0 ? step.Whole : step.State) + "."
             }.Where(text => text is not null));
             AutomationProperties.SetName(button, L.T("Design.StepAccessible", i, step.Title, accessibilityState));
         }
@@ -204,7 +222,36 @@ public sealed partial class MainWindow
     }
 
     /// <summary>What changes in the button of one stage while a page is shown.</summary>
-    private sealed record JourneyParts(string Page, TextBlock Mark, TextBlock Detail);
+    private sealed record JourneyParts(string Page, TextBlock Mark, TextBlock Detail)
+    {
+        /// <summary>The words under the title in full, where <see cref="Detail"/> shows them shortened or cut off.</summary>
+        public string Whole { get; set; } = "";
+    }
+
+    private static void ShowJourneyTooltip(Button button)
+    {
+        if (button.Tag is not JourneyParts parts) return;
+        ToolTipService.SetToolTip(button, parts.Detail.IsTextTrimmed || parts.Whole != parts.Detail.Text ? parts.Whole : null);
+    }
+
+    // Outside its own field an order number is shown with at most this many characters.
+    private const int ShownOrderNumberLength = 16;
+
+    /// <summary>
+    /// The order number as the strip of steps, the menu and the explanation of the file names show it. A number may be 64
+    /// characters long; repeated in running text at that length it would add lines wherever it appears. Of a long one the
+    /// beginning and the end are shown, with an ellipsis between them: numbers of one series often differ only at the end.
+    /// The field it was typed in, the saved files and the page that names them have it in full.
+    /// </summary>
+    private static string ShownOrderNumber(string number)
+    {
+        if (number.Length <= ShownOrderNumberLength) return number;
+        var (head, tail) = (ShownOrderNumberLength / 2, ShownOrderNumberLength - ShownOrderNumberLength / 2 - 1);
+        // Never half of a surrogate pair.
+        if (char.IsHighSurrogate(number[head - 1])) head--;
+        if (char.IsLowSurrogate(number[^tail])) tail--;
+        return number[..head] + "…" + number[^tail..];
+    }
 
     // Five stages: one row whenever each can still show its two short lines (a maximised window on a laptop included), otherwise
     // three or two columns. An unmeasured host counts as wide.

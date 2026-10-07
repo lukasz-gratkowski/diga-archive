@@ -180,7 +180,7 @@ While **Guide me to the next step** is ticked in **Settings** (it is, to begin w
 The first page asks for an order number. It is optional. An order or reference number is useful when the files of one job should carry the same name, for example when you save recordings for someone else. If you leave the field empty, the files keep the recordings' own titles.
 
 1. Type the number into **Order number (optional)**, or leave the field empty.
-2. Look at the card **File names** beside it. It says how the files will be named.
+2. Look at the card **File names** beside it. It says how the files will be named. While you type, the card and the rest of the page stay as they are; they follow the number about a second after you stop typing. A number longer than 16 characters is shown there, in the strip of steps and in the menu by its beginning and its end, with an ellipsis between them. The files get the whole number.
 3. Choose **Continue to Connect**, or press Enter.
 
 The rules for the number:

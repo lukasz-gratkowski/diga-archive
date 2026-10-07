@@ -6,7 +6,10 @@ A changelog says what changed, not what was tried. How far each part of the appl
 
 ## [Unreleased]
 
-Nothing yet.
+### Fixed
+
+- **While you type an order number, nothing else on the page changes.** In 0.6.1 the strip of steps, the menu entry and the card about file names still followed every character, and with a long number they kept adding lines, which moved everything around them. They now follow the number once, about a second after the typing stops, and they no longer change their size when they do: the strip keeps its height on that page, and a number longer than 16 characters is shown outside its own field by its beginning and its end, with an ellipsis between them. The whole number is in the tooltip, it is what a screen reader hears, and it is what the files are named by.
+- The steps in the strip at the top are all as tall as the tallest one, so a step whose second line comes or goes changes nothing around it.
 
 ## [0.6.1] - 2026-10-07
 

@@ -180,7 +180,7 @@ Dopóki na stronie **Ustawienia** zaznaczona jest opcja **Prowadź mnie do kolej
 Pierwsza strona prosi o numer zamówienia. Jest on opcjonalny. Numer zamówienia albo inne oznaczenie przydaje się, gdy pliki z jednego zlecenia mają nosić tę samą nazwę, na przykład gdy zapisujesz nagrania dla kogoś innego. Jeśli zostawisz pole puste, pliki zachowają tytuły nagrań.
 
 1. Wpisz numer w polu **Numer zamówienia (opcjonalnie)** albo zostaw je puste.
-2. Spójrz na kartę **Nazwy plików** obok. Podaje ona, jak pliki zostaną nazwane.
+2. Spójrz na kartę **Nazwy plików** obok. Podaje ona, jak pliki zostaną nazwane. Podczas pisania karta i reszta strony pozostają bez zmian; uwzględniają numer mniej więcej sekundę po tym, jak przestaniesz pisać. Numer dłuższy niż 16 znaków jest tam, w pasku kroków i w menu pokazywany skrótowo: początek i koniec z wielokropkiem pośrodku. Pliki dostają cały numer.
 3. Wybierz **Przejdź do połączenia** albo naciśnij Enter.
 
 Zasady dotyczące numeru:
