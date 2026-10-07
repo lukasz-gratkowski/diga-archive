@@ -12,7 +12,7 @@ body:
     attributes:
       label: Application version
       description: Settings → About shows it. Say whether you used the installer or the portable package.
-      placeholder: 0.6.0, installer
+      placeholder: 0.6.1, installer
     validations:
       required: true
   - type: input

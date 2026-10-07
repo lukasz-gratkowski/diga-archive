@@ -2,7 +2,7 @@
 
 This document is for people who change the code. It says which projects there are and what depends on what, what the main types of the library do, how the window is put together, which rules every change has to keep, and where the tests for each area are.
 
-It describes the code of version 0.6.0. What the application does, step by step and with the reasons, is in [How it works](HOW-IT-WORKS.md). What it stores and sends is in [Privacy](PRIVACY.md). Commands for building and testing are in [Contributing](../CONTRIBUTING.md).
+It describes the code of version 0.6.1. What the application does, step by step and with the reasons, is in [How it works](HOW-IT-WORKS.md). What it stores and sends is in [Privacy](PRIVACY.md). Commands for building and testing are in [Contributing](../CONTRIBUTING.md).
 
 ## Contents
 
@@ -45,7 +45,7 @@ At run time the application also uses three files that are not .NET code:
 | `ffmpeg.exe`, `ffprobe.exe` | Started as separate programs by `ProcessRunner`. The check of the media tools (`ValidateToolsAsync` in `MainWindow.Settings.cs`) starts them the same way, with `-version` and a limit of 30 seconds. | No. Downloaded by the installer or the application; see `FfmpegPackage.json` |
 | `MediaInfo.dll` | Loaded as a native library by `MediaInfoService` | Yes, in `tools` beside the application |
 
-Shared build settings are in `Directory.Build.props`, among them the version (`0.6.0`). The .NET SDK version is pinned in `global.json`.
+Shared build settings are in `Directory.Build.props`, among them the version (`0.6.1`). The .NET SDK version is pinned in `global.json`.
 
 <a name="repository"></a>
 ## The repository
