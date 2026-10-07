@@ -97,13 +97,16 @@ public sealed partial class MainWindow
 
     private FrameworkElement BrandHeader()
     {
-        var row = new Grid { ColumnSpacing = 10, Margin = new Thickness(14, 18, 8, 22) };
-        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(45) });
+        // The block is laid out like an entry of the menu below it: the mark fills the column the icons are centred in, from
+        // 4 to 44 pixels, which is where the highlight of the chosen entry begins, and the name starts where the labels start,
+        // at 48 pixels. It stands on a row of its own under the menu button, which is centred on the same column.
+        var row = new Grid { ColumnSpacing = 4, Margin = new Thickness(4, 2, 8, 14) };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var logoPath = Path.Combine(AppContext.BaseDirectory, "Assets", "BrandMark.png");
         if (File.Exists(logoPath))
         {
-            var logo = new Image { Source = new BitmapImage(new Uri(logoPath)), Width = 45, Height = 45 };
+            var logo = new Image { Source = new BitmapImage(new Uri(logoPath)), Width = 40, Height = 40 };
             // The name beside it says what this is; the picture itself adds nothing for a screen reader.
             AutomationProperties.SetAccessibilityView(logo, AccessibilityView.Raw);
             row.Children.Add(logo);
@@ -138,29 +141,57 @@ public sealed partial class MainWindow
         foreach (var step in steps)
             if (_navigationStates.TryGetValue(step.Page, out var state)) state.Text = step.State;
         if (_journeyHost is null) return;
-        _journeyHost.Children.Clear();
-        _journeyHost.ColumnDefinitions.Clear();
-        _journeyHost.RowDefinitions.Clear();
+        // While a page is shown only the words change: the order number as it is typed, the count of ticked recordings. The
+        // buttons stay and get their new words. Making them anew for every keystroke made the whole strip flicker and move.
+        var buttons = _journeyHost.Children.OfType<Button>().ToArray();
+        var built = buttons.Length == steps.Length && _journeyHost.Children.Count == steps.Length
+            && buttons.Select(button => (button.Tag as JourneyParts)?.Page).SequenceEqual(steps.Select(step => step.Page));
+        if (!built)
+        {
+            _journeyHost.Children.Clear();
+            _journeyHost.ColumnDefinitions.Clear();
+            _journeyHost.RowDefinitions.Clear();
+            foreach (var step in steps)
+            {
+                var heading = new Grid { ColumnSpacing = 8 };
+                heading.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+                heading.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                // The number of a stage and the tick of a finished one take the same room, so the title beside them stays put.
+                var badge = StageBadge("", step.Tone);
+                badge.MinWidth = 36;
+                var mark = (TextBlock)badge.Child;
+                mark.HorizontalAlignment = HorizontalAlignment.Center;
+                heading.Children.Add(badge);
+                var title = new TextBlock { Text = step.Title, FontSize = 14, FontWeight = FontWeights.SemiBold,
+                    VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
+                Grid.SetColumn(title, 1);
+                heading.Children.Add(title);
+                // Two lines at most: a long order number ends in an ellipsis instead of making the strip taller with every character.
+                var detail = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis };
+                var button = new Button
+                {
+                    Content = new StackPanel { Spacing = 6, Children = { heading, detail } },
+                    HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Left,
+                    Tag = new JourneyParts(step.Page, mark, detail)
+                };
+                detail.IsTextTrimmedChanged += (sender, _) => ToolTipService.SetToolTip(button, sender.IsTextTrimmed ? sender.Text : null);
+                var page = step.Page;
+                button.Click += (_, _) => Navigate(page);
+                _journeyHost.Children.Add(button);
+            }
+            buttons = _journeyHost.Children.OfType<Button>().ToArray();
+        }
         for (var i = 0; i < steps.Length; i++)
         {
-            var step = steps[i];
+            var (step, button, parts) = (steps[i], buttons[i], (JourneyParts)buttons[i].Tag);
             var current = _page == step.Page;
-            var heading = new Grid { ColumnSpacing = 8 };
-            heading.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            heading.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             // The order number is stage 00; Connect to Archive keep their numbers 01 to 04.
-            heading.Children.Add(StageBadge(step.Done ? "✓" : $"{i:00}", step.Tone));
-            var title = new TextBlock { Text = step.Title, FontSize = 14, FontWeight = FontWeights.SemiBold,
-                VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
-            Grid.SetColumn(title, 1);
-            heading.Children.Add(title);
-            var detail = new TextBlock { Text = current ? L.T("Design.CurrentState", step.State) : step.State, FontSize = 12, TextWrapping = TextWrapping.Wrap };
-            var button = new Button
-            {
-                Content = new StackPanel { Spacing = 6, Children = { heading, detail } },
-                HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Left,
-                Style = AppStyle(current ? $"Diga{step.Tone}ButtonStyle" : "DigaJourneyButtonStyle")
-            };
+            var mark = step.Done ? "✓" : $"{i:00}";
+            if (parts.Mark.Text != mark) parts.Mark.Text = mark;
+            var detail = current ? L.T("Design.CurrentState", step.State) : step.State;
+            if (parts.Detail.Text != detail) parts.Detail.Text = detail;
+            var style = AppStyle(current ? $"Diga{step.Tone}ButtonStyle" : "DigaJourneyButtonStyle");
+            if (!ReferenceEquals(button.Style, style)) button.Style = style;
             var accessibilityState = string.Join(" ", new[]
             {
                 current ? L.T("Design.CurrentStepAccessible") : null,
@@ -168,11 +199,12 @@ public sealed partial class MainWindow
                 step.State + "."
             }.Where(text => text is not null));
             AutomationProperties.SetName(button, L.T("Design.StepAccessible", i, step.Title, accessibilityState));
-            button.Click += (_, _) => Navigate(step.Page);
-            _journeyHost.Children.Add(button);
         }
-        ArrangeGrid(_journeyHost, JourneyColumns(_journeyHost.ActualWidth));
+        if (!built) ArrangeGrid(_journeyHost, JourneyColumns(_journeyHost.ActualWidth));
     }
+
+    /// <summary>What changes in the button of one stage while a page is shown.</summary>
+    private sealed record JourneyParts(string Page, TextBlock Mark, TextBlock Detail);
 
     // Five stages: one row whenever each can still show its two short lines (a maximised window on a laptop included), otherwise
     // three or two columns. An unmeasured host counts as wide.

@@ -123,8 +123,10 @@ public sealed partial class MainWindow : Window
         _navigation.IsBackButtonVisible = NavigationViewBackButtonVisible.Collapsed;
         _navigation.IsSettingsVisible = false;
         _navigation.AlwaysShowHeader = false;
+        // Not the pane's header: that shares a row with the menu button, which pushes the block to the right of it and out of
+        // line with the menu. As custom content it gets the row below, from the pane's left edge.
         var paneHeader = BrandHeader();
-        _navigation.PaneHeader = paneHeader;
+        _navigation.PaneCustomContent = paneHeader;
         AddNavigation("order", L.T("Shell.Order"), new SymbolIcon(Symbol.Tag));
         // In the narrow window only the icons show, so each has to be recognisable on its own: a network link here, a cloud below.
         AddNavigation("source", L.T("Shell.Connect"), new FontIcon { Glyph = "\uE703" });
@@ -197,7 +199,8 @@ public sealed partial class MainWindow : Window
 
     private void AddNavigation(string page, string label, IconElement icon)
     {
-        var state = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap };
+        // Two lines at most: a long order number ends in an ellipsis instead of pushing the entries below it down as it is typed.
+        var state = new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap, MaxLines = 2, TextTrimming = TextTrimming.CharacterEllipsis };
         _navigationStates[page] = state;
         var item = new NavigationViewItem
         {

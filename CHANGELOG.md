@@ -6,7 +6,10 @@ A changelog says what changed, not what was tried. How far each part of the appl
 
 ## [Unreleased]
 
-Nothing yet.
+### Fixed
+
+- **Typing an order number no longer makes the page jump.** The strip of steps at the top was put together anew with every character, and the card that explains the file names grew from one line to several as soon as a number was typed, which pushed everything below it down. The strip now only changes its words, and the card keeps its size. A very long number ends in an ellipsis in the strip and in the menu instead of adding line after line.
+- **The name and logo in the menu line up with the menu.** They stand on a row of their own under the menu button: the logo over the column of the icons, the name where the labels begin.
 
 ## [0.6.0] - 2026-10-06
 

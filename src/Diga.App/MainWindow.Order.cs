@@ -34,7 +34,17 @@ public sealed partial class MainWindow
         form.Children.Add(Muted(L.T("Journey.Order.Help"), 12));
 
         var naming = Body("");
-        var names = new StackPanel { Spacing = 12, Children = { StageBadge(L.T("Journey.Order.NamingBadge"), "Coral"), naming, Muted(L.T("Journey.Order.NamingHelp"), 12) } };
+        naming.VerticalAlignment = VerticalAlignment.Top;
+        // Typing must not move anything. Without a number the sentence is one line; with one it is several, and it names the
+        // number three times. An invisible copy of the longer sentence holds the room for it from the start, for a number of
+        // usual length or the longest one typed on this page, so the card keeps its height while the words in it change.
+        var room = Body("");
+        room.Opacity = 0;
+        room.IsHitTestVisible = false;
+        AutomationProperties.SetAccessibilityView(room, Microsoft.UI.Xaml.Automation.Peers.AccessibilityView.Raw);
+        var usual = new string('0', 12);
+        var longest = usual;
+        var names = new StackPanel { Spacing = 12, Children = { StageBadge(L.T("Journey.Order.NamingBadge"), "Coral"), new Grid { Children = { room, naming } }, Muted(L.T("Journey.Order.NamingHelp"), 12) } };
         var next = ActionButton(L.T("Journey.Order.Continue"), () => { Navigate("source"); return Task.CompletedTask; }, true);
 
         void Apply()
@@ -45,6 +55,11 @@ public sealed partial class MainWindow
             next.IsEnabled = valid;
             naming.Text = _orderNumber.Length == 0 ? L.T("Journey.Order.NamesByTitle") : L.T("Journey.Order.NamesByOrder", _orderNumber);
             AutomationProperties.SetName(naming, naming.Text);
+            // An emptied field starts over: the room goes back to that of a usual number.
+            if (input.Text.Length == 0) longest = usual;
+            else if (_orderNumber.Length > longest.Length) longest = _orderNumber;
+            var reserved = L.T("Journey.Order.NamesByOrder", longest);
+            if (room.Text != reserved) room.Text = reserved;
         }
         Apply();
         input.TextChanged += (_, _) => { Apply(); RefreshJourney(); };
