@@ -113,7 +113,7 @@
   "Shell.SwitchAccount": "To use another account, choose Connect again: the sign-in page lets you pick the account. There is no need to disconnect first.",
   "Shell.OneDriveFolder": "Folder for uploads (optional)",
   "Shell.OneDriveFolderPlaceholder": "Link to a shared folder; empty means the top folder",
-  "Shell.OneDriveFolderHelp": "With the link to a shared OneDrive or SharePoint folder, uploads go into that folder instead of the top folder of your OneDrive, the Cloud page shows it, and the link beside an uploaded file opens it for everyone the folder is shared with, whichever account their browser is signed in to. The account connected here must be allowed to add files to the folder. Connect OneDrive after setting the folder: Microsoft is then asked for the permission that a folder belonging to someone else needs. The link is kept on this PC, encrypted for your Windows account.",
+  "Shell.OneDriveFolderHelp": "With the link to a shared OneDrive or SharePoint folder, uploads go into that folder instead of the top folder of your OneDrive, and the Cloud page shows it. The link beside an uploaded file opens the folder through this same link, for whoever the link works for; a link made for anyone needs no particular account. The account connected here must be allowed to add files to the folder. Connect OneDrive after setting the folder: Microsoft is then asked for the permission that a folder belonging to someone else needs. The link is kept on this PC, encrypted for your Windows account.",
   "Shell.OneDriveFolderGuide": "How to share a folder and use its link ↗",
   "Shell.OneDriveFolderCheck": "Save & check the folder",
   "Shell.OneDriveFolderChecking": "Asking OneDrive about the folder…",

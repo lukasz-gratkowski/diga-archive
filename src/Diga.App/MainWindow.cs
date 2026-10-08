@@ -396,7 +396,12 @@ public sealed partial class MainWindow : Window
         page.Children.Add(BuildRecorderChecklist());
     }
 
-    private async Task RunOperationAsync(Func<CancellationToken, Task> operation, string success)
+    /// <summary>
+    /// Runs one action of the window. <paramref name="success"/> is what the status line says when it returns;
+    /// <paramref name="outcome"/> can name something else for an action that returned without doing what it set out to do.
+    /// It is asked before the status is read out, so that what is heard is what happened.
+    /// </summary>
+    private async Task RunOperationAsync(Func<CancellationToken, Task> operation, string success, Func<string?>? outcome = null)
     {
         if (_busy || _closed) return;
         _busy = true;
@@ -417,7 +422,7 @@ public sealed partial class MainWindow : Window
         try
         {
             await operation(operationSource.Token);
-            if (!_closed) _status.Text = success;
+            if (!_closed) _status.Text = outcome?.Invoke() ?? success;
         }
         // Only the user's own Cancel (or closing the window) is a cancellation; a time limit that ran out is a failure with a reason.
         catch (OperationCanceledException) when (operationSource.IsCancellationRequested) { if (!_closed) _status.Text = L.T("Shell.Cancelled"); }

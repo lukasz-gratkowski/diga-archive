@@ -184,6 +184,8 @@ public sealed class CloudTests : IDisposable
         Assert.StartsWith(Diga.Core.Localization.AppText.T("Core.Cloud.Upload.FolderRefusedOwnFiles", (int)status), own.Message, StringComparison.Ordinal);
         Assert.Contains("Access denied", own.Message, StringComparison.Ordinal);
         Assert.Equal(2, calls);
+        // The upload report shows 260 characters of a file's reason; both messages leave room in it for what the service said.
+        Assert.All(new[] { error.Message, own.Message }, message => Assert.InRange(message.Length, 1, 260));
         // The top folder keeps the general message.
         var top = await Assert.ThrowsAsync<InvalidOperationException>(() => new CloudUploadService(http).UploadAsync(new(Account(CloudProvider.OneDrive), path)));
         Assert.StartsWith(Diga.Core.Localization.AppText.T("Core.Cloud.Upload.StartFailed", (int)status), top.Message, StringComparison.Ordinal);

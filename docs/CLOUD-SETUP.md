@@ -163,7 +163,7 @@ A sign-in made *before* a folder was set reaches the account's own files only. T
 ### What changes in the application
 
 - **Archive.** The card **A copy in the cloud** says that files go to the shared folder set in Settings. Before each upload the application asks OneDrive about the link again, so a link that was withdrawn is reported before a long upload starts.
-- **The link beside an uploaded file** reads **Open the shared folder** followed by the folder's name, and opens the sharing link you pasted: the folder, not the single file. That link opens for everyone the link was made for, whichever Microsoft account their browser is signed in to. The address of a single file in someone else's drive would open only for an account that can already reach that file.
+- **The link beside an uploaded file** reads **Open the shared folder** followed by the folder's name, and opens the sharing link you pasted: the folder, not the single file. Who can open it depends on the kind of link you chose in step 2. As Microsoft describes its sharing links, a link for **Anyone** opens in any browser, whatever Microsoft account it is signed in to; the other kinds open only when the browser is signed in to an account the link was made for. The address of a single file in someone else's drive would open only for an account that can already reach that file. The project has not tried either.
 - **Cloud.** The page lists the shared folder instead of the top folder.
 - **Room.** The application asks the drive that holds the folder how much room is free. If that drive does not say, the upload starts without the check.
 - **Names.** As in the top folder, a file whose name is taken is stored under a different name; nothing is replaced.
@@ -182,7 +182,7 @@ A sign-in made *before* a folder was set reaches the account's own files only. T
 ### What is stored and sent
 
 - The link is kept in `%LOCALAPPDATA%\Diga\Accounts\folder-OneDrive.bin`, encrypted for your Windows account like the sign-ins. It is not written to the settings file. A sharing link of the kind **Anyone** is itself a key to the folder, which is why it is stored this way.
-- **Disconnect** does not remove the link; clearing the field does, and so does uninstalling.
+- **Disconnect** does not remove the link; saving the page with the field empty does, and so does uninstalling.
 - The link is sent to Microsoft Graph (`graph.microsoft.com`) and nowhere else, together with the sign-in, each time the application asks which folder it leads to.
 - Clearing the field does not narrow a sign-in that already has the wider permission. To take it back, remove the application's permission at Microsoft (see [the last section](#what-the-application-stores-and-how-to-take-access-back)) and connect again with the field empty.
 

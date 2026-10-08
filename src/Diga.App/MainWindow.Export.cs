@@ -59,7 +59,8 @@ public sealed partial class MainWindow
                     : L.T("Journey.Archive.InCloudAs", ProviderName(copy.Provider), copy.At.ToLocalTime().ToString("t"), copy.Name);
                 entry.Children.Add(new TextBlock { Text = "✓  " + stored, FontSize = 13, TextWrapping = TextWrapping.Wrap, Style = AppStyle("DigaTealTextStyle") });
                 // A file in a shared folder is reached through the folder's sharing link: the file's own address opens only for an
-                // account that has the file in its storage, and the browser may be signed in to another one.
+                // account that can already reach the file, and the browser may be signed in to another one. Who the sharing link
+                // opens for was decided when the folder was shared.
                 if (copy.Link is not null) entry.Children.Add(LinkButton(copy.Folder is { } folder ? L.T("Journey.Archive.OpenSharedFolder", folder)
                     : L.T("Journey.Archive.OpenInCloud", ProviderName(copy.Provider)), copy.Link.AbsoluteUri));
             }

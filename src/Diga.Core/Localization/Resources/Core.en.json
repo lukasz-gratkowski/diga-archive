@@ -163,7 +163,7 @@
   "Core.Dlna.Browse.RemoteError": "Recorder ContentDirectory error {0}: {1}",
   "Core.Dlna.Download.HttpError": "The recorder did not return a recording (HTTP {0}). Refresh the folder and check the recorder's access settings.",
   "Core.Cloud.Upload.StartFailed": "Could not start upload (HTTP {0}). Check your connection, sign-in, and cloud storage space. Existing cloud files were not overwritten.",
-  "Core.Cloud.Upload.FolderRefused": "OneDrive did not accept the file in the shared folder (HTTP {0}). The account connected here must be allowed to add files to that folder: share the folder with this account for editing. A folder that belongs to another organisation can be out of this application's reach.",
-  "Core.Cloud.Upload.FolderRefusedOwnFiles": "OneDrive did not accept the file in the shared folder (HTTP {0}). The sign-in on this PC reaches only the connected account's own files. If the folder belongs to someone else, connect OneDrive again in Settings, so that Microsoft is asked for the permission a shared folder needs; the account must also be allowed to add files to that folder.",
+  "Core.Cloud.Upload.FolderRefused": "OneDrive did not accept the file in the shared folder (HTTP {0}). The connected account must be allowed to add files there: share the folder with it for editing.",
+  "Core.Cloud.Upload.FolderRefusedOwnFiles": "OneDrive did not accept the file in the shared folder (HTTP {0}). This sign-in reaches only the account's own files. If the folder is someone else's, connect OneDrive again in Settings.",
   "Core.Cloud.Upload.ChunkFailed": "Could not upload chunk (HTTP {0}). Check your connection, sign-in, and cloud storage space. Existing cloud files were not overwritten."
 }

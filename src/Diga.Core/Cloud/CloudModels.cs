@@ -6,7 +6,8 @@ namespace Diga.Core.Cloud;
 public enum CloudProvider { GoogleDrive, OneDrive }
 /// <summary>
 /// <paramref name="SharedFiles"/> makes a OneDrive sign-in ask for the files other people shared with the account as well as
-/// the account's own. Microsoft requires that of a work or school account before it may write into someone else's folder.
+/// the account's own. Microsoft describes the narrower permission as the user's own files, so a work or school account needs
+/// this one before it may write into someone else's folder.
 /// </summary>
 public sealed record OAuthClientOptions(CloudProvider Provider, string ClientId, string? ClientSecret = null, bool SharedFiles = false)
 {
@@ -59,8 +60,8 @@ public sealed class CloudSignInExpiredException(CloudProvider provider, string m
 /// <summary>
 /// A folder that uploads go to instead of the top folder of the drive: the folder a sharing link leads to, as OneDrive
 /// described it when the link was looked up. <see cref="Link"/> is that sharing link. In a browser it opens the folder for
-/// everyone the folder is shared with, whichever account the browser is signed in to; the address of a file in the folder
-/// would open only for an account that has the file in its own storage.
+/// whoever the link works for, which was decided when the folder was shared; the address of a file in the folder would
+/// open only for an account that can already reach the file.
 /// </summary>
 public sealed record CloudFolder(string DriveId, string ItemId, string Name, Uri Link);
 

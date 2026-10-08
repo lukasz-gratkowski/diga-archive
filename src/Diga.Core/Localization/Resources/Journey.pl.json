@@ -85,6 +85,7 @@
   "Journey.Cloud.Optional": "Opcjonalny następny krok",
   "Journey.Cloud.Title": "Kopia w chmurze",
   "Journey.Cloud.Help": "Prześlij zaznaczone pliki na własny OneDrive lub Dysk Google. Nic nie jest przesyłane, dopóki o tym nie zdecydujesz.",
+  "Journey.Cloud.HelpFolder": "Prześlij zaznaczone pliki do udostępnionego folderu OneDrive ustawionego w Ustawieniach. Nic nie jest przesyłane, dopóki o tym nie zdecydujesz.",
   "Journey.Cloud.UploadTo": "Prześlij do usługi {0}",
   "Journey.Cloud.AddFiles": "Dodaj pliki z tego komputera…",
   "Journey.Cloud.WhereOneDrive": "Pliki trafiają do głównego folderu Twojego OneDrive. Jeśli nazwa jest już zajęta, OneDrive zapisuje nowy plik pod zmienioną nazwą; niczego nie zastępuje.",

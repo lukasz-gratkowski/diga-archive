@@ -99,7 +99,14 @@ public sealed class CloudBrowseService(HttpClient? http = null, CloudAuthService
             using var document = JsonDocument.Parse(body);
             var root = document.RootElement;
             if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty(google ? "storageQuota" : "quota", out var quota) || quota.ValueKind != JsonValueKind.Object) return null;
-            if (!google) return quota.TryGetProperty("remaining", out var remaining) && remaining.ValueKind == JsonValueKind.Number && remaining.TryGetInt64(out var free) && free >= 0 ? free : null;
+            if (!google)
+            {
+                if (!quota.TryGetProperty("remaining", out var remaining) || remaining.ValueKind != JsonValueKind.Number || !remaining.TryGetInt64(out var free) || free < 0) return null;
+                // A library, or someone else's drive, can answer with zero in every field: figures this account may not see.
+                // Nothing left of a drive that has no size is no answer, and must not stop an upload as a full drive does.
+                var sized = quota.TryGetProperty("total", out var size) && size.ValueKind == JsonValueKind.Number && size.TryGetInt64(out var whole) && whole > 0;
+                return free == 0 && !sized ? null : free;
+            }
             // Google gives both numbers as text, and no limit at all for an unlimited plan.
             return long.TryParse(Text(quota, "limit"), NumberStyles.None, CultureInfo.InvariantCulture, out var limit)
                 && long.TryParse(Text(quota, "usage"), NumberStyles.None, CultureInfo.InvariantCulture, out var usage) ? Math.Max(0, limit - usage) : null;
@@ -166,8 +173,10 @@ public sealed class CloudBrowseService(HttpClient? http = null, CloudAuthService
         { throw new TimeoutException(L.T("Core.Cloud.Browse.Timeout"), ex); }
     }
 
-    // The two identifiers become part of an address; they are short and never contain what would end a path segment.
-    private static bool IsId(string? value) => value is { Length: > 0 and <= MaximumIdLength } && value.IndexOfAny(['/', '\\', '?', '#', '%']) < 0 && !value.Any(char.IsControl) && !value.Any(char.IsWhiteSpace);
+    // The two identifiers become part of an address; they are short and never contain what would end a path segment, and
+    // neither is one of the two names that an address reads as "this folder" and "the folder above".
+    private static bool IsId(string? value) => value is { Length: > 0 and <= MaximumIdLength } and not ("." or "..")
+        && value.IndexOfAny(['/', '\\', '?', '#', '%']) < 0 && !value.Any(char.IsControl) && !value.Any(char.IsWhiteSpace);
 
     private static string FolderAddress(CloudFolder folder) => $"https://graph.microsoft.com/v1.0/drives/{Uri.EscapeDataString(folder.DriveId)}/items/{Uri.EscapeDataString(folder.ItemId)}";
 

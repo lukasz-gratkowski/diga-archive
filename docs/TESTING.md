@@ -48,7 +48,7 @@ No automated test needs Python. Python is needed only for the recorder emulator 
 
 ### How many tests there are
 
-About 750 test cases, of which 43 are in the integration group. This was counted on 8 October 2026: a run of the whole project reported 756, from 246 tests marked `[Fact]` and 86 tests marked `[Theory]` that run once for each of 480 `[InlineData]` rows and of 30 generated rows. The number changes with every pull request. The summary line at the end of a `dotnet test` run gives the real number, and this command lists the tests without running them:
+About 750 test cases, of which 43 are in the integration group. This was counted on 8 October 2026: a run of the whole project reported 758, from 246 tests marked `[Fact]` and 86 tests marked `[Theory]` that run once for each of 482 `[InlineData]` rows and of 30 generated rows. The number changes with every pull request. The summary line at the end of a `dotnet test` run gives the real number, and this command lists the tests without running them:
 
 ```powershell
 dotnet test tests/Diga.Tests --list-tests
@@ -117,7 +117,7 @@ Files marked *integration* belong to the integration group; everything else is i
 
 ## The catalog tests
 
-Every text the application shows is in the catalogs under `src/Diga.Core/Localization/Resources`: `Shell`, `Journey`, `Design` and `Core`, each in English (`.en.json`) and Polish (`.pl.json`). At the time of writing there are 730 keys per language. `LocalizationTests.cs` keeps the catalogs and the code in step:
+Every text the application shows is in the catalogs under `src/Diga.Core/Localization/Resources`: `Shell`, `Journey`, `Design` and `Core`, each in English (`.en.json`) and Polish (`.pl.json`). At the time of writing there are 731 keys per language. `LocalizationTests.cs` keeps the catalogs and the code in step:
 
 | Test | What fails it |
 |---|---|
@@ -164,9 +164,9 @@ There is no emulator for the cloud. Connecting, uploading and the **Cloud** page
 
 ## What the automated tests do not cover
 
-**The window.** Nothing in `src/Diga.App` is run by a test. Pages, layout, focus, keyboard use, what a screen reader says, Windows contrast themes, display scaling and how the two languages fit on screen are checked by hand, if at all. CI only compiles the window. The release procedure also checks that the packaged application starts and creates a window, and that the installer installs and uninstalls; it does not look at any page ([Releasing](RELEASING.md)). No check with a screen reader, with a contrast theme or at several display scalings is recorded for versions 0.6.0 to 0.6.2; the accessibility changes in 0.6.0 were made from reading the code.
+**The window.** Nothing in `src/Diga.App` is run by a test. Pages, layout, focus, keyboard use, what a screen reader says, Windows contrast themes, display scaling and how the two languages fit on screen are checked by hand, if at all. CI only compiles the window. The release procedure also checks that the packaged application starts and creates a window, and that the installer installs and uninstalls; it does not look at any page ([Releasing](RELEASING.md)). No check with a screen reader, with a contrast theme or at several display scalings is recorded for versions 0.6.0 to 0.6.3; the accessibility changes in 0.6.0 were made from reading the code.
 
-**Real recorders.** The project owns no recorder. There is one report: the owner of a recorder reported as a DMR-BS850 confirmed on 2 October 2026 that version 0.5.2 found the recorder, opened its folders and saved recordings both as exact copies (`.mpg`) and as MKV. The report did not say which recordings were chosen or how the saved files were checked. Versions 0.6.0 to 0.6.2 have run from start to finish only against the project's recorder emulator. Other recorder models, protected recordings on a real recorder and real network conditions are not covered.
+**Real recorders.** The project owns no recorder. There is one report: the owner of a recorder reported as a DMR-BS850 confirmed on 2 October 2026 that version 0.5.2 found the recorder, opened its folders and saved recordings both as exact copies (`.mpg`) and as MKV. The report did not say which recordings were chosen or how the saved files were checked. Versions 0.6.0 to 0.6.3 have run from start to finish only against the project's recorder emulator. Other recorder models, protected recordings on a real recorder and real network conditions are not covered.
 
 **Real cloud accounts.** The sign-in, upload and listing code runs in the tests against simulated Microsoft and Google servers only.
 

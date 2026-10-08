@@ -170,7 +170,7 @@ Logowanie wykonane, *zanim* ustawiono folder, obejmuje tylko własne pliki konta
 ### Co się zmienia w aplikacji
 
 - **Archiwum.** Karta **Kopia w chmurze** informuje, że pliki trafiają do udostępnionego folderu ustawionego w Ustawieniach. Przed każdym przesyłaniem aplikacja ponownie pyta OneDrive o link, więc o wycofanym linku dowiesz się, zanim zacznie się długie przesyłanie.
-- **Odnośnik przy przesłanym pliku** brzmi **Otwórz udostępniony folder** z nazwą folderu i otwiera wklejony przez Ciebie link udostępniania: folder, a nie pojedynczy plik. Ten link otwiera się każdemu, dla kogo został utworzony, niezależnie od tego, na jakie konto Microsoft zalogowana jest przeglądarka. Adres pojedynczego pliku na czyimś dysku otworzyłby się tylko kontu, które już ma dostęp do tego pliku.
+- **Odnośnik przy przesłanym pliku** brzmi **Otwórz udostępniony folder** z nazwą folderu i otwiera wklejony przez Ciebie link udostępniania: folder, a nie pojedynczy plik. To, kto może go otworzyć, zależy od rodzaju linku wybranego w kroku 2. Według opisu linków udostępniania w dokumentacji Microsoft link rodzaju **Anyone** otwiera się w każdej przeglądarce, bez względu na to, na jakie konto Microsoft jest zalogowana; pozostałe rodzaje otwierają się tylko wtedy, gdy przeglądarka jest zalogowana na konto, dla którego link utworzono. Adres pojedynczego pliku na czyimś dysku otworzyłby się tylko kontu, które już ma dostęp do tego pliku. Projekt nie sprawdził ani jednego, ani drugiego.
 - **Chmura.** Strona pokazuje udostępniony folder zamiast folderu głównego.
 - **Miejsce.** Aplikacja pyta dysk, na którym leży folder, ile jest wolnego miejsca. Jeśli dysk tego nie podaje, przesyłanie zaczyna się bez tego sprawdzenia.
 - **Nazwy.** Tak jak w folderze głównym, plik o zajętej nazwie zostaje zapisany pod zmienioną nazwą; nic nie jest zastępowane.
@@ -189,7 +189,7 @@ Logowanie wykonane, *zanim* ustawiono folder, obejmuje tylko własne pliki konta
 ### Co jest przechowywane i wysyłane
 
 - Link jest przechowywany w pliku `%LOCALAPPDATA%\Diga\Accounts\folder-OneDrive.bin`, zaszyfrowany dla Twojego konta Windows tak jak logowania. Nie trafia do pliku ustawień. Link udostępniania rodzaju **Anyone** sam jest kluczem do folderu i dlatego jest przechowywany w ten sposób.
-- Przycisk **Rozłącz** nie usuwa linku; usuwa go wyczyszczenie pola, a także odinstalowanie aplikacji.
+- Przycisk **Rozłącz** nie usuwa linku; usuwa go zapisanie strony z pustym polem, a także odinstalowanie aplikacji.
 - Link jest wysyłany do Microsoft Graph (`graph.microsoft.com`) i nigdzie indziej, razem z logowaniem, za każdym razem, gdy aplikacja pyta, do jakiego folderu prowadzi.
 - Wyczyszczenie pola nie zawęża logowania, które ma już szersze uprawnienie. Aby je cofnąć, usuń zgodę aplikacji po stronie Microsoft (zob. [ostatnią część](#dane)) i połącz się ponownie przy pustym polu.
 

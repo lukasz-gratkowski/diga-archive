@@ -424,6 +424,9 @@ public sealed class CloudBrowseTests
     [InlineData("""{"id":"01FOLDER","name":"Recordings","folder":{}}""", "Core.Cloud.Browse.UnexpectedResponse")]
     [InlineData("""{"id":"01/../x","name":"Recordings","folder":{},"parentReference":{"driveId":"b!d"}}""", "Core.Cloud.Browse.UnexpectedResponse")]
     [InlineData("""{"id":"01FOLDER","name":"Recordings","folder":{},"parentReference":{"driveId":"b!d?x=1"}}""", "Core.Cloud.Browse.UnexpectedResponse")]
+    // The two names an address reads as "here" and "one up": they would take a segment out of the address.
+    [InlineData("""{"id":"..","name":"Recordings","folder":{},"parentReference":{"driveId":"b!d"}}""", "Core.Cloud.Browse.UnexpectedResponse")]
+    [InlineData("""{"id":"01FOLDER","name":"Recordings","folder":{},"parentReference":{"driveId":"."}}""", "Core.Cloud.Browse.UnexpectedResponse")]
     [InlineData("""["not","an","object"]""", "Core.Cloud.Browse.UnexpectedResponse")]
     [InlineData("<html>a proxy's page</html>", "Core.Cloud.Browse.UnexpectedResponse")]
     public async Task AnAnswerThatIsNotAUsableFolderIsRefusedInTheApplicationsWords(string answer, string messageKey)
@@ -443,6 +446,8 @@ public sealed class CloudBrowseTests
         using var http = Client(_ => { calls++; return Json(status, "{\"error\":{\"code\":\"" + code + "\",\"message\":\"" + reason + "\"}}"); });
         var error = await Assert.ThrowsAsync<InvalidOperationException>(() => Service(http).ResolveFolderAsync(Account(CloudProvider.OneDrive) with { SharedFiles = true }, new Uri(SharePointLink)));
         Assert.StartsWith(Diga.Core.Localization.AppText.T("Core.Cloud.Folder.Failed", (int)status), error.Message, StringComparison.Ordinal);
+        // The longer message begins with the same words, so that it is not the one shown has to be said separately.
+        Assert.False(error.Message.StartsWith(Diga.Core.Localization.AppText.T("Core.Cloud.Folder.FailedOwnFiles", (int)status), StringComparison.Ordinal));
         Assert.Contains(reason, error.Message, StringComparison.Ordinal);
         Assert.IsNotType<CloudSignInExpiredException>(error);
         // A refusal is an answer; it is not asked again.
@@ -489,6 +494,16 @@ public sealed class CloudBrowseTests
         // Another account's drive may take files without saying how much room it has; that is not a reason to stop.
         using var silent = Client(_ => Json(HttpStatusCode.Forbidden, """{"error":{"code":"accessDenied","message":"Access denied"}}"""));
         Assert.Null(await Service(silent).GetFreeSpaceAsync(Account(CloudProvider.OneDrive), folder));
+        // Such a drive can also answer with zeros throughout. Nothing left of a drive without a size is no answer; nothing left
+        // of a drive that has a size is a full drive.
+        using var zeros = Client(_ => Json(HttpStatusCode.OK, """{"quota":{"deleted":0,"remaining":0,"total":0,"used":0}}"""));
+        Assert.Null(await Service(zeros).GetFreeSpaceAsync(Account(CloudProvider.OneDrive), folder));
+        Assert.Null(await Service(zeros).GetFreeSpaceAsync(Account(CloudProvider.OneDrive), null));
+        using var unsized = Client(_ => Json(HttpStatusCode.OK, """{"quota":{"remaining":0}}"""));
+        Assert.Null(await Service(unsized).GetFreeSpaceAsync(Account(CloudProvider.OneDrive), folder));
+        using var full = Client(_ => Json(HttpStatusCode.OK, """{"quota":{"deleted":0,"remaining":0,"total":1099511627776,"used":1099511627776}}"""));
+        Assert.Equal(0, await Service(full).GetFreeSpaceAsync(Account(CloudProvider.OneDrive), folder));
+        Assert.Equal(0, await Service(full).GetFreeSpaceAsync(Account(CloudProvider.OneDrive), null));
         // The account's own drive is asked as before when no folder is set.
         calls.Clear();
         await Service(http).GetFreeSpaceAsync(Account(CloudProvider.OneDrive), null);

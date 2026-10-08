@@ -6,17 +6,25 @@ A changelog says what changed, not what was tried. How far each part of the appl
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.6.3] - 2026-10-08
+
+OneDrive uploads can go into a shared folder. That part has run only against simulated Microsoft servers; nobody has tried it yet with a real OneDrive or SharePoint folder. The [cloud guide](docs/CLOUD-SETUP.md#shared-folder) says how to set it up and what Microsoft's documentation says about which accounts can use it. Like the versions before it, this one has run from start to finish only against the project's recorder emulator, and its installer is not digitally signed.
+
 ### Added
 
-- **A shared folder for OneDrive uploads.** In **Settings**, the OneDrive card has a new field, **Folder for uploads (optional)**. Paste the link to a shared OneDrive or SharePoint folder there, and uploads go into that folder instead of the top folder of your own OneDrive; the **Cloud** page then lists that folder. **Save & check the folder** asks OneDrive which folder the link leads to. Several people can so collect their recordings in one place, each signed in with their own Microsoft account. With the field empty everything works as before.
-- **The link beside an uploaded file opens the shared folder.** When a folder is set, the link reads **Open the shared folder** with the folder's name. It is the sharing link you pasted, so it opens for everyone that link was made for, whichever Microsoft account their browser is signed in to.
+- **A shared folder for OneDrive uploads.** In **Settings**, the OneDrive card has a new field, **Folder for uploads (optional)**. Paste the link to a shared OneDrive or SharePoint folder there, and uploads go into that folder instead of the top folder of your own OneDrive; the **Cloud** page then lists that folder. **Save & check the folder** asks OneDrive which folder the link leads to. That way several people can collect their recordings in one place, each signed in with their own Microsoft account. With the field empty everything works as before.
+- **The link beside an uploaded file opens the shared folder.** When a folder is set, the link reads **Open the shared folder** with the folder's name. It is the sharing link you pasted, so the kind of link decides who can open it: a link made for anyone opens in any browser, whatever account it is signed in to, and the other kinds open only when the browser is signed in to an account the link was made for.
 
 ### Changed
 
-- **With a folder set, connecting OneDrive asks Microsoft for a wider permission**: all files your account can access, not only your own. Microsoft requires it of a work or school account before an application may add files to a folder that belongs to someone else. The application uses it only for the folder you set. A sign-in made before the folder was set keeps the narrower permission; the application says so and offers **Connect OneDrive** when that matters. Without a folder nothing changes, and nothing changes for Google Drive.
+- **With a folder set, connecting OneDrive asks Microsoft for a wider permission**: all files your account can access, not only your own. Microsoft's documentation describes the narrower permission as covering only the account's own files, so a work or school account needs the wider one before the application can add files to a folder that belongs to someone else. The application uses it only for the folder you set. A sign-in made before the folder was set keeps the narrower permission; the application says so and offers **Connect OneDrive** when that matters. Without a folder nothing changes, and nothing changes for Google Drive.
 - The link to the folder is stored on the PC encrypted, beside the saved sign-ins, and not in the settings file.
 
-The shared folder has run only against simulated Microsoft servers; nobody has tried it yet with a real OneDrive or SharePoint folder. The [cloud guide](docs/CLOUD-SETUP.md#shared-folder) says how to set it up and what Microsoft's documentation says about which accounts can use it.
+### Fixed
+
+- **A screen reader hears what really happened to an upload or a cloud listing.** When some files failed, or the sign-in had ended, the status line was first set to the words for a finished upload and read out, and corrected only afterwards. It now says the real outcome from the start.
 
 ## [0.6.2] - 2026-10-07
 

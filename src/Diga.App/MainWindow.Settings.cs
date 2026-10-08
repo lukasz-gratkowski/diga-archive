@@ -218,19 +218,25 @@ public sealed partial class MainWindow
             if (folderLink.Length != 0 && !CloudBrowseService.TryParseFolderLink(folderLink, out _)) throw new InvalidDataException(L.T("Core.Cloud.Folder.LinkInvalid"));
             var changed = CloudProviders.Where(provider => !StringComparer.Ordinal.Equals(ClientIdFor(_settings, provider), ClientIdFor(draft, provider))).ToArray();
             var (previousCache, previousOutput, previousFormat, previousWizard) = (_settings.CacheDirectory, _settings.OutputDirectory, _settings.DefaultFormat, _settings.UseWizard);
+            // The link to the folder for uploads is kept beside the sign-ins, encrypted, not in the settings file. It is written
+            // first: if it cannot be written, nothing of the page has been saved yet, and nothing below is left half done.
+            // An empty field is saved every time: a link file that could not be read at the start shows as an empty field too,
+            // and saving that field must remove the file.
+            if (folderLink != _oneDriveFolderLink || folderLink.Length == 0)
+            {
+                await _folderLinks.SaveAsync(CloudProvider.OneDrive, folderLink, ct);
+                if (folderLink != _oneDriveFolderLink)
+                {
+                    _oneDriveFolderLink = folderLink;
+                    _oneDriveFolderName = null;
+                    // What was listed belongs to the folder that was set before.
+                    if (_cloudListingProvider == CloudProvider.OneDrive) _cloudListing = null;
+                }
+            }
             // The page is saved by several buttons, so what the page does not show must survive it: the destination and the way of
             // saving are taken from the file as it is now.
             draft = await _settingsStore.UpdateAsync(stored => draft with { UploadProvider = _uploadProvider, SaveAsContainer = stored.SaveAsContainer }, ct);
             _settings = draft;
-            // The link to the folder for uploads is kept beside the sign-ins, encrypted, not in the settings file.
-            if (folderLink != _oneDriveFolderLink)
-            {
-                await _folderLinks.SaveAsync(CloudProvider.OneDrive, folderLink, ct);
-                _oneDriveFolderLink = folderLink;
-                _oneDriveFolderName = null;
-                // What was listed belongs to the folder that was set before.
-                if (_cloudListingProvider == CloudProvider.OneDrive) _cloudListing = null;
-            }
             // A sign-in belongs to the application or client ID it was made with. With another ID the application is not connected;
             // the saved sign-in stays where it is, is found again if the ID comes back, and is removed only by Disconnect, which asks.
             foreach (var provider in changed) ForgetCloudAccount(provider);
@@ -266,15 +272,39 @@ public sealed partial class MainWindow
         saveBar.Children.Add(save);
         _pageFooter.Content = saveBar;
 
-        // Saves the page and asks OneDrive, as the connected account, which folder the link leads to.
+        // Saves the page and asks OneDrive, as the connected account, which folder the link leads to. When the folder was not
+        // checked after all, the status line says what happened instead: the page was saved, or the sign-in has ended.
+        string? notChecked = null;
         Task CheckOneDriveFolderAsync() => RunOperationAsync(async ct =>
         {
+            notChecked = null;
             await SaveDraftAsync(ct);
-            if (_oneDriveFolderLink.Length == 0) { ShowBanner(L.T("Shell.PreferencesSaved"), L.T("Shell.OneDriveFolderEmpty"), InfoBarSeverity.Informational); return; }
+            if (_oneDriveFolderLink.Length == 0)
+            {
+                notChecked = L.T("Shell.PreferencesSavedStatus");
+                ShowBanner(L.T("Shell.PreferencesSaved"), L.T("Shell.OneDriveFolderEmpty"), InfoBarSeverity.Informational);
+                return;
+            }
             var account = IsCloudConnected(CloudProvider.OneDrive) ? await _cloudAuth.GetSavedAccountAsync(CloudProvider.OneDrive, ClientIdFor(CloudProvider.OneDrive), ct) : null;
-            if (account is null) { ShowBanner(L.T("Shell.PreferencesSaved"), L.T("Shell.OneDriveFolderConnectFirst"), InfoBarSeverity.Informational); return; }
+            if (account is null)
+            {
+                notChecked = L.T("Shell.PreferencesSavedStatus");
+                ShowBanner(L.T("Shell.PreferencesSaved"), L.T("Shell.OneDriveFolderConnectFirst"), InfoBarSeverity.Informational);
+                return;
+            }
             SetProgress(null, L.T("Shell.OneDriveFolderChecking"));
-            var folder = await ResolveUploadFolderAsync(account, ct);
+            CloudFolder? folder;
+            try { folder = await ResolveUploadFolderAsync(account, ct); }
+            // A sign-in OneDrive no longer accepts is the same news here as at an upload: the card must stop saying "connected".
+            catch (CloudSignInExpiredException expired)
+            {
+                App.LogException("Cloud sign-in ended", expired);
+                _expiredSignIns.Add(CloudProvider.OneDrive);
+                _cloudAskedFor = CloudProvider.OneDrive;
+                notChecked = L.T("Journey.Cloud.SignInEnded", ProviderName(CloudProvider.OneDrive));
+                ShowBanner(notChecked, expired.Message, InfoBarSeverity.Warning);
+                return;
+            }
             var found = L.T("Shell.OneDriveFolderCheckedHelp", folder!.Name);
             // A sign-in made before a folder was set reaches the account's own files only. That is enough for the account's own
             // folder, and for no one else's, so the way to the wider sign-in is offered with the good news. The question may
@@ -283,7 +313,7 @@ public sealed partial class MainWindow
             if (account.SharedFiles) ShowBanner(L.T("Shell.OneDriveFolderChecked"), found, InfoBarSeverity.Success);
             else ShowBanner(L.T("Shell.OneDriveFolderChecked"), found + " " + L.T("Shell.OneDriveFolderOwnFiles"), InfoBarSeverity.Informational,
                 ActionButton(L.T("Shell.ConnectOneDrive"), () => ConnectCloudAsync(CloudProvider.OneDrive, _ => Task.CompletedTask)));
-        }, L.T("Shell.OneDriveFolderCheckedStatus"));
+        }, L.T("Shell.OneDriveFolderCheckedStatus"), () => notChecked);
         folderSetup.Children.Add(ActionButton(L.T("Shell.OneDriveFolderCheck"), CheckOneDriveFolderAsync));
 
         // Disconnect is offered only when there is a saved sign-in to remove. That includes one made with an earlier ID: changing

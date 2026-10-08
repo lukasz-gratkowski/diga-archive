@@ -120,7 +120,7 @@ public sealed partial class MainWindow
         var cloud = new StackPanel { Spacing = 16 };
         cloud.Children.Add(StageBadge(L.T("Journey.Cloud.Optional"), "Violet"));
         cloud.Children.Add(SectionTitle(L.T("Journey.Cloud.Title"), Symbol.Upload));
-        cloud.Children.Add(Body(L.T("Journey.Cloud.Help")));
+        cloud.Children.Add(Body(L.T(HasUploadFolder(provider) ? "Journey.Cloud.HelpFolder" : "Journey.Cloud.Help")));
         cloud.Children.Add(ProviderSelector());
         cloud.Children.Add(Muted(CloudConnectionLabel(provider), 12));
         cloud.Children.Add(Muted(L.T(provider == CloudProvider.GoogleDrive ? "Journey.Cloud.WhereGoogle" : HasUploadFolder(provider) ? "Journey.Cloud.WhereOneDriveFolder" : "Journey.Cloud.WhereOneDrive"), 12));
@@ -285,7 +285,7 @@ public sealed partial class MainWindow
                 // Shown after the operation has ended, on the Settings page the user is taken to.
                 _pendingCloudMessage = expired.Message;
             }
-        }, L.T("Journey.Cloud.CompleteStatus"));
+        }, L.T("Journey.Cloud.CompleteStatus"), () => outcome);
         if (signInEnded && !_closed) SendToCloudSettings(provider, L.T("Journey.Cloud.SignInEnded", name), _pendingCloudMessage ?? "", InfoBarSeverity.Warning);
         if (outcome is not null && !_closed) _status.Text = outcome;
     }
@@ -296,7 +296,7 @@ public sealed partial class MainWindow
     {
         var index = _exports.FindIndex(e => string.Equals(e.Path, path, StringComparison.OrdinalIgnoreCase));
         if (index < 0) return;
-        // In a shared folder the link is the folder's sharing link, which opens for everyone the folder is shared with.
+        // In a shared folder the link is the folder's sharing link, which opens for whoever that link works for.
         var link = folder?.Link ?? (Uri.TryCreate(result.WebUrl, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps ? uri : null);
         _exports[index] = _exports[index] with { CloudCopies = [.. _exports[index].CloudCopies, new CloudCopy(provider, result.Name, link, DateTimeOffset.Now, folder?.Name)] };
     }
@@ -414,7 +414,7 @@ public sealed partial class MainWindow
                 signInEnded = true;
                 _pendingCloudMessage = expired.Message;
             }
-        }, L.T("Journey.CloudView.Listed"));
+        }, L.T("Journey.CloudView.Listed"), () => signInEnded ? L.T("Journey.Cloud.SignInEnded", name) : null);
         if (signInEnded && !_closed)
         {
             SendToCloudSettings(provider, L.T("Journey.Cloud.SignInEnded", name), _pendingCloudMessage ?? "", InfoBarSeverity.Warning);

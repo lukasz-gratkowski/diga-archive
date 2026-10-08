@@ -4,7 +4,7 @@
 
 AMG DIGA Archive is an application for Windows 11. It saves recordings from a Panasonic DIGA recorder to your PC over the home network, and it can upload the saved files to your own OneDrive or Google Drive. It never writes to the recorder, and it never replaces a file that already exists.
 
-This guide describes version 0.6.2 and follows the window as you see it. Names in **bold** are shown by the application or by its installer. Names shown by Windows itself are in “quotation marks”. The project is independent of Panasonic.
+This guide describes version 0.6.3 and follows the window as you see it. Names in **bold** are shown by the application or by its installer. Names shown by Windows itself are in “quotation marks”. The project is independent of Panasonic.
 
 ## Contents
 
@@ -41,8 +41,8 @@ Please read this before you rely on the application for recordings you cannot re
 - The project's automated tests run against simulated recorders, against simulated Microsoft and Google servers, and against the real FFmpeg and MediaInfo.
 - On real hardware there is one report. The owner of a recorder reported as a DMR-BS850 confirmed on 2 October 2026 that version 0.5.2 found the recorder, opened its folders and saved recordings both as exact copies (`.mpg`) and as MKV, and that connecting OneDrive with the built-in registration and uploading worked.
 - That OneDrive report was made with the earlier built-in Microsoft registration. On 5 October 2026 the application got a new built-in registration (application ID `bfd21bf0-32a9-4520-8bbb-d525e3d34aea`), and version 0.6.0 uses it. Nobody has reported connecting or uploading through the new registration yet. The only thing checked for it is that Microsoft's sign-in service knows the ID and accepts the `http://localhost` redirect, which is the address through which a sign-in comes back to the application. This was checked without signing in.
-- Versions 0.6.0 to 0.6.2 have run from start to finish only against the project's recorder emulator, not against a real recorder.
-- Google Drive has never been run against Google's real servers by the project. Work or school OneDrive accounts are untested.
+- Versions 0.6.0 to 0.6.3 have run from start to finish only against the project's recorder emulator, not against a real recorder.
+- Google Drive has never been run against Google's real servers by the project. Work or school OneDrive accounts are untested, and so is uploading into a shared OneDrive or SharePoint folder.
 - Releases are not digitally signed yet; see [The Windows warning](#smartscreen).
 
 Which recorder models work, and which recordings a recorder offers for saving, is not known beyond that one report. If you try the application, a recorder report on the project's [issues page](https://github.com/lukasz-gratkowski/diga-archive/issues/new/choose) helps the people after you, whether it worked or not.
@@ -53,7 +53,7 @@ Which recorder models work, and which recordings a recorder offers for saving, i
 <a name="installer"></a>
 ### The installer
 
-1. Open the project's [latest release](https://github.com/lukasz-gratkowski/diga-archive/releases/latest) and download `DIGA-0.6.2-win-x64-setup.exe`.
+1. Open the project's [latest release](https://github.com/lukasz-gratkowski/diga-archive/releases/latest) and download `DIGA-0.6.3-win-x64-setup.exe`.
 2. Start the file. Windows will probably show a warning first; see [The Windows warning](#smartscreen).
 3. Choose the language of the installer, English or Polish. This is the language of the installer only. The application chooses its own; see [First start and language](#first-start).
 4. Accept the licence. It is the GNU General Public License, version 3, shown in English.
@@ -85,7 +85,7 @@ FFmpeg is a separate, free program for handling video. It is not part of the app
 
 Exact copies, the technical details of a recording and cloud upload work without FFmpeg.
 
-If you leave the option ticked, the installer downloads one specific FFmpeg package from the GitHub releases of its distributor, Gyan Doshi, or from gyan.dev if that fails. For version 0.6.2 this is FFmpeg 9.0.2, a download of about 110 MB. The installer uses the download only if its SHA-256 checksum equals the one recorded in the installer, and it installs only the two programs `ffmpeg.exe` and `ffprobe.exe` with their licence texts. FFmpeg is licensed under the GNU GPL version 3.
+If you leave the option ticked, the installer downloads one specific FFmpeg package from the GitHub releases of its distributor, Gyan Doshi, or from gyan.dev if that fails. For version 0.6.3 this is FFmpeg 9.0.2, a download of about 110 MB. The installer uses the download only if its SHA-256 checksum equals the one recorded in the installer, and it installs only the two programs `ffmpeg.exe` and `ffprobe.exe` with their licence texts. FFmpeg is licensed under the GNU GPL version 3.
 
 - If the download fails, the installer says why and installs the application without FFmpeg.
 - If you cancel the download, the installer asks whether to install without FFmpeg.
@@ -96,7 +96,7 @@ You can add FFmpeg at any time later. In the application open **Settings**, then
 <a name="portable"></a>
 ### The portable ZIP
 
-If you prefer no installer, download `DIGA-0.6.2-win-x64-portable.zip`, unpack it to a folder of your choice and start `Diga.exe`. Windows may show the same warning as for the installer.
+If you prefer no installer, download `DIGA-0.6.3-win-x64-portable.zip`, unpack it to a folder of your choice and start `Diga.exe`. Windows may show the same warning as for the installer.
 
 - The package holds the same application. It does not hold FFmpeg; download it in **Settings** under **Media tools · advanced**.
 - “Portable” means only that nothing is installed. The application still keeps its settings, saved sign-ins, temporary files and error log in your Windows profile; see [Where the application keeps its own data](#data).
@@ -122,7 +122,7 @@ After an update the application may also say **FFmpeg update available**; see [F
 This part is for people who install without the wizard, for example from a script. The installer is made with Inno Setup and accepts its standard switches.
 
 ```bat
-DIGA-0.6.2-win-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LANG=en
+DIGA-0.6.3-win-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LANG=en
 ```
 
 | Switch | Effect |
@@ -482,7 +482,7 @@ What to expect:
 - Before it starts, the application asks the service how much room is free, and stops if the ticked files do not fit.
 - The line at the bottom shows the file being sent, how much of it has gone, the speed and the time left. If the connection is interrupted, the upload waits and tries again by itself, for up to 15 minutes without an answer, and then continues where it was. The line says so meanwhile.
 - **Cancel** stops the upload. Files already uploaded stay in the cloud. The file that was being sent has to start again.
-- An uploaded file is unticked and gets a line such as **Uploaded to OneDrive at 14:05**, with a link that begins **Open in**. With a shared folder set, the link reads **Open the shared folder** and opens that folder; it works for everyone the folder's link was made for, whichever Microsoft account their browser is signed in to. Files that failed stay ticked, and the message gives the reason for each.
+- An uploaded file is unticked and gets a line such as **Uploaded to OneDrive at 14:05**, with a link that begins **Open in**. With a shared folder set, the link reads **Open the shared folder** and opens that folder through the sharing link you set. Who can open it was decided when the folder was shared; [Cloud setup](CLOUD-SETUP.md#shared-folder) explains the kinds of link. Files that failed stay ticked, and the message gives the reason for each.
 - The application does not recognise a file that is already in the cloud. Uploading it again stores it twice. Within one session it asks **Upload again?** first.
 
 How far connecting and uploading have been tested is said under [How far it has been tested](#tested).
@@ -584,7 +584,7 @@ Everything the application stores for itself is in one folder of your Windows pr
 | In that folder | What it holds |
 |---|---|
 | `settings.json` | Your settings: language, folders, file type, guidance, the cloud destination, the way of saving used last, the Google client ID and your own Microsoft application ID if you entered them, and the locations of your own media tools. No password, no sign-in and no client secret. |
-| `Accounts` | The saved cloud sign-ins, and with the Google sign-in the Google client secret. Windows encrypts them for your Windows account. Another account, or another PC, cannot read them. |
+| `Accounts` | The saved cloud sign-ins, with the Google sign-in the Google client secret, and the link to a shared folder for uploads if you set one. Windows encrypts them for your Windows account. Another account, or another PC, cannot read them. |
 | `Cache` | Temporary files, unless you chose another folder in **Settings**. Emptied when the application closes. |
 | `tools` | FFmpeg, if you downloaded it from inside the application. |
 | `logs` | The error log. |
@@ -600,7 +600,7 @@ The application stores nothing in the cloud except the files you upload. It send
 To remove the data, close the application and delete the folder `%LOCALAPPDATA%\Diga`, or only the parts you want gone:
 
 - Deleting `settings.json` returns every setting to its starting value.
-- Deleting `Accounts` removes the saved sign-ins from this PC. It does not withdraw the permission you gave at Microsoft or Google; [Uninstalling, and what stays](#uninstall) says where to do that. The Google client secret goes with the Google sign-in.
+- Deleting `Accounts` removes the saved sign-ins from this PC, and the link to a shared folder for uploads; uploads then go to the top folder of your own OneDrive again until you set the link anew. It does not withdraw the permission you gave at Microsoft or Google; [Uninstalling, and what stays](#uninstall) says where to do that. The Google client secret goes with the Google sign-in.
 - The error log can also be deleted with **Delete the error log** in **Settings**.
 
 Uninstalling removes most of this by itself; see [Uninstalling, and what stays](#uninstall).
@@ -734,7 +734,7 @@ The uninstaller removes:
 
 - the application and its folder, including an FFmpeg downloaded by the installer;
 - an FFmpeg downloaded by the application (`%LOCALAPPDATA%\Diga\tools`);
-- the saved cloud sign-ins (`%LOCALAPPDATA%\Diga\Accounts`), and with them the Google client secret;
+- the saved cloud sign-ins (`%LOCALAPPDATA%\Diga\Accounts`), and with them the Google client secret and the link to a shared folder for uploads;
 - temporary files in the default folder (`%LOCALAPPDATA%\Diga\Cache`);
 - the error log (`%LOCALAPPDATA%\Diga\logs`), and the log folder that versions up to 0.5.2 used (`%LOCALAPPDATA%\DigaArchive`).
 

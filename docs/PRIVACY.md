@@ -2,7 +2,7 @@
 
 This document lists everything the application keeps on your PC, every address it contacts and when, what uninstalling removes, and how to take back the access you gave it to your cloud storage.
 
-It describes version 0.6.2 and is taken from the source code. Each part names the files it is based on, so that the statements can be checked. It covers what the application's own code does. What Windows, your browser, your recorder, Microsoft and Google do with what reaches them is theirs to describe.
+It describes version 0.6.3 and is taken from the source code. Each part names the files it is based on, so that the statements can be checked. It covers what the application's own code does. What Windows, your browser, your recorder, Microsoft and Google do with what reaches them is theirs to describe.
 
 ## Contents
 
@@ -34,9 +34,9 @@ It describes version 0.6.2 and is taken from the source code. Each part names th
 
 - The application has **no telemetry, no update check, no account and no server of its own**. The project receives nothing from it.
 - It contacts **nothing when it starts**. Every connection follows something you chose: searching for the recorder, opening a folder, saving, downloading FFmpeg, connecting a cloud account, uploading, listing your cloud files.
-- Its own data is in **one folder**, `%LOCALAPPDATA%\Diga`: a settings file, the saved cloud sign-ins, temporary files, a downloaded FFmpeg and an error log. Your recordings are where you chose to save them.
+- Its own data is in **one folder**, `%LOCALAPPDATA%\Diga`: a settings file, the saved cloud sign-ins and the link to a shared folder if you set one, temporary files, a downloaded FFmpeg and an error log. Your recordings are where you chose to save them.
 - Cloud sign-ins are **encrypted by Windows for your Windows account**. The application never sees your Microsoft or Google password.
-- **Nothing is uploaded** until you tick files and choose to upload them, and then only to your own OneDrive or Google Drive.
+- **Nothing is uploaded** until you tick files and choose to upload them, and then only to your own OneDrive or Google Drive, or to the shared OneDrive or SharePoint folder whose link you saved in **Settings**.
 
 <a name="stored"></a>
 ## What is stored on your PC
@@ -124,7 +124,7 @@ The digits are the SHA-256 of the application or client ID the sign-in was made 
 
 **How it is protected.** The content is encrypted with the Windows Data Protection API for the current user, together with a fixed extra value that is part of the source code. Microsoft's documentation of this function says that only code running as the same Windows user can decrypt such data. So another Windows account on the PC cannot read the file, and copying the file alone to another PC does not make it readable there. A program that runs under your own Windows account can ask Windows to decrypt it; the protection is as strong as the protection of your Windows account. A file that cannot be decrypted, for example in a profile restored on another PC, counts as "no saved sign-in": you connect again.
 
-**When a file is written.** After a sign-in, each time the application renews the access token during an upload or a listing, and when the service refuses the sign-in.
+**When a file is written.** After a sign-in, each time the application renews the access token during an upload, a listing or a check of the shared folder, and when the service refuses the sign-in.
 
 **When a file is removed.** **Disconnect** removes every sign-in file of that service, including one made with an ID you used earlier. Uninstalling removes the whole `Accounts` folder. Changing the application or client ID in **Settings** does not remove the file of the previous ID: it stays, encrypted and unused, and is used again if you return to that ID.
 
@@ -271,14 +271,14 @@ The application sends nothing in the background. It asks the recorder only when 
 
 Code: `src/Diga.Core/Cloud/CloudAuthService.cs`, `CloudUploadService.cs`, `CloudBrowseService.cs`.
 
-Microsoft is contacted only after you choose **Connect OneDrive**, an upload to OneDrive, or the list of your OneDrive files.
+Microsoft is contacted only after you choose **Connect OneDrive**, an upload to OneDrive, the list of your OneDrive files, or **Save & check the folder** while OneDrive is connected.
 
 | When | Address | What is sent |
 |---|---|---|
 | **Connect OneDrive** | Your browser opens `https://login.microsoftonline.com/common/oauth2/v2.0/authorize` | In the address: the application ID, the return address on your PC, the permissions asked for, and two random one-time values. You sign in on Microsoft's page. |
 | After you signed in | `https://login.microsoftonline.com/common/oauth2/v2.0/token` | The application ID, the one-time code that came back, and the secret value from which one of the two random values was calculated |
 | Right after that, once | `https://graph.microsoft.com/v1.0/me/drive` | The sign-in. The application asks for the kind of drive and the owner's name, to label the connection. |
-| Upload or list: if the sign-in is about to run out | The token address above | The application ID and the refresh token |
+| Upload, list or folder check: if the sign-in is about to run out | The token address above | The application ID, the refresh token and the permissions the sign-in was given |
 | Upload: before the first file | `https://graph.microsoft.com/v1.0/me/drive` | The sign-in. The application asks how much space is free. |
 | Upload: for each file | `https://graph.microsoft.com/v1.0/me/drive/root:/<file name>:/createUploadSession` | The sign-in and the file name |
 | Upload: the file | The upload address Microsoft returned | The content of the file, in pieces, and after a failure the question how much of it has arrived. No sign-in is sent to this address. |
@@ -298,10 +298,10 @@ The upload address must be an `https` address whose host is, or ends with, one o
 
 **The permissions.** The application asks for `offline_access`, which lets it renew the sign-in without asking you each time, and for the Microsoft Graph permission `Files.ReadWrite`. The application describes it on its OneDrive card: **Microsoft will ask whether this application may have full access to your files; when a folder for uploads is set below, it asks about all files you can access, because that folder may belong to someone else. The application uses the permission only to add new files to the top folder of your OneDrive, or to the folder set below, and to list that folder; it never changes or deletes a file that is already there.** The requests in the two tables are all the requests the code sends to Microsoft.
 
-When a shared folder for uploads is set, a new sign-in asks for `Files.ReadWrite.All` in place of `Files.ReadWrite`. Microsoft describes it as full access to all files the user can access; it is what Microsoft requires of a work or school account before an application may write into a folder that belongs to someone else. The application uses it for the four requests in the second table and for nothing else. Which of the two permissions Microsoft granted is kept with the sign-in.
+When a shared folder for uploads is set, a new sign-in asks for `Files.ReadWrite.All` in place of `Files.ReadWrite`. Microsoft describes it as full access to all files the user can access; Microsoft describes `Files.ReadWrite` as the user's own files, so a work or school account needs the wider permission before an application can write into a folder that belongs to someone else. The application uses it for the four requests in the second table and for nothing else. Which of the two permissions Microsoft granted is kept with the sign-in.
 
 <a name="shared-folder"></a>
-**The link to a shared folder.** Code: `src/Diga.Core/Cloud/CloudFolderLinkStore.cs`, `ProtectedFile.cs`. The link you paste into **Folder for uploads (optional)** is stored in `%LOCALAPPDATA%\Diga\Accounts\folder-OneDrive.bin`, encrypted with the Windows Data Protection API for the current user in the same way as the sign-ins, with an extra value of its own. It is not written to the settings file, because a sharing link of the kind that works for anyone is itself a key to the folder. The file is written when you save a link, removed when you save an empty field, and removed with the `Accounts` folder by uninstalling. **Disconnect** leaves it. A file that cannot be decrypted counts as no folder: uploads then go to the top folder. The link is sent to Microsoft Graph only. On the **Archive** page it becomes the link beside each file uploaded into the folder, and it is kept in memory for that until you close the application. The error log can contain the message Microsoft returned for a refused link, but the application does not write the link itself to the log.
+**The link to a shared folder.** Code: `src/Diga.Core/Cloud/CloudFolderLinkStore.cs`, `ProtectedFile.cs`. The link you paste into **Folder for uploads (optional)** is stored in `%LOCALAPPDATA%\Diga\Accounts\folder-OneDrive.bin`, encrypted with the Windows Data Protection API for the current user in the same way as the sign-ins, with an extra value of its own. It is not written to the settings file, because a sharing link of the kind that works for anyone is itself a key to the folder. The file is written when you save a link, removed when you save the page with the field empty (also a file that could not be read, which shows as an empty field), and removed with the `Accounts` folder by uninstalling. **Disconnect** leaves it. A file that cannot be decrypted counts as no folder: uploads then go to the top folder. The link is sent to Microsoft Graph only. On the **Archive** page it becomes the link beside each file uploaded into the folder, and it is kept in memory for that until you close the application. The error log can contain the message Microsoft returned for a refused link, but the application does not write the link itself to the log.
 
 <a name="google"></a>
 ### Google, for Google Drive
@@ -361,11 +361,12 @@ When you choose a link, the application hands the address to Windows, and your d
 |---|---|
 | **AMG DIGA Archive · project and releases** | `https://github.com/lukasz-gratkowski/diga-archive` |
 | **Look for a newer version on the releases page** | `https://github.com/lukasz-gratkowski/diga-archive/releases` |
-| **Recorder setup and troubleshooting**, **Step-by-step setup guide** | A guide in the same repository, at the address of the installed version: `https://github.com/lukasz-gratkowski/diga-archive/blob/v<version>/docs/…` |
+| **Recorder setup and troubleshooting**, **Step-by-step setup guide**, **How to share a folder and use its link** | A guide in the same repository, at the address of the installed version: `https://github.com/lukasz-gratkowski/diga-archive/blob/v<version>/docs/…` |
 | **MediaInfo · library and licence** | `https://mediaarea.net/en/MediaInfo` |
 | **Open the app permissions of your Microsoft account** | `https://account.microsoft.com/privacy/app-access`, or `https://myapps.microsoft.com` for a work or school account |
 | **Open the app permissions of your Google account** | `https://myaccount.google.com/connections` |
 | **Open in browser** on the **Cloud** page; **Open in OneDrive** or **Open in Google Drive** on the **Archive** page | The web address that Microsoft or Google returned for that file. Only `https` addresses are offered. |
+| **Open the shared folder** on the **Archive** page | The sharing link you saved in **Settings**. It can be any `https` address; the application does not check whose it is. |
 
 The sign-in pages of Microsoft and Google are opened in the same way.
 
@@ -376,6 +377,7 @@ The sign-in pages of Microsoft and Google are opened in the same way.
 |---|---|
 | Start or close the application | nothing |
 | Type an order number, change settings, **Save preferences** | nothing |
+| **Save & check the folder** | Microsoft, if OneDrive is connected and a link is set; otherwise nothing |
 | **Find network recorders**, **Search again** | the devices on your home network that answer the search |
 | **Ask this address** | the address you typed, if it is a private address of a home network |
 | **Connect to recorder**, open a folder, **Refresh folder** | the recorder |

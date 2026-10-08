@@ -4,7 +4,7 @@
 
 AMG DIGA Archive to aplikacja dla systemu Windows 11. Zapisuje na komputerze nagrania z nagrywarki Panasonic DIGA, korzystając z sieci domowej, i może przesłać zapisane pliki na Twój własny OneDrive lub Dysk Google. Nigdy niczego nie zapisuje na nagrywarce i nigdy nie zastępuje pliku, który już istnieje.
 
-Instrukcja opisuje wersję 0.6.2 i prowadzi przez okno aplikacji w takiej kolejności, w jakiej je widzisz. Nazwy **pogrubione** pokazuje aplikacja albo jej instalator. Nazwy pokazywane przez sam system Windows są w „cudzysłowie”. Projekt jest niezależny od firmy Panasonic.
+Instrukcja opisuje wersję 0.6.3 i prowadzi przez okno aplikacji w takiej kolejności, w jakiej je widzisz. Nazwy **pogrubione** pokazuje aplikacja albo jej instalator. Nazwy pokazywane przez sam system Windows są w „cudzysłowie”. Projekt jest niezależny od firmy Panasonic.
 
 ## Spis treści
 
@@ -41,8 +41,8 @@ Przeczytaj to, zanim powierzysz aplikacji nagrania, których niczym nie da się 
 - Testy automatyczne projektu działają na symulowanych nagrywarkach, na symulowanych serwerach Microsoft i Google oraz na prawdziwych programach FFmpeg i MediaInfo.
 - Z prawdziwego sprzętu pochodzi jedno zgłoszenie. Właściciel nagrywarki zgłoszonej jako DMR-BS850 potwierdził 2 października 2026 r., że wersja 0.5.2 znalazła nagrywarkę, otworzyła jej foldery i zapisała nagrania zarówno jako dokładne kopie (`.mpg`), jak i jako pliki MKV, oraz że połączenie z OneDrive przez wbudowaną rejestrację i przesyłanie plików zadziałały.
 - Połączenie z OneDrive i przesyłanie, o których mówi to zgłoszenie, wykonano przez wcześniejszą wbudowaną rejestrację Microsoft. 5 października 2026 r. aplikacja otrzymała nową wbudowaną rejestrację (identyfikator aplikacji `bfd21bf0-32a9-4520-8bbb-d525e3d34aea`) i wersja 0.6.0 korzysta właśnie z niej. Nikt jeszcze nie zgłosił, że połączył się albo przesłał pliki przez nową rejestrację. Sprawdzono dla niej tylko to, że usługa logowania Microsoft zna ten identyfikator i przyjmuje przekierowanie na adres `http://localhost`, czyli adres, pod którym logowanie wraca do aplikacji. Sprawdzono to bez logowania się.
-- Wersje od 0.6.0 do 0.6.2 przeszły całą drogę od początku do końca wyłącznie z emulatorem nagrywarki należącym do projektu, a nie z prawdziwą nagrywarką.
-- Projekt nigdy nie uruchomił obsługi Dysku Google na prawdziwych serwerach Google. Konta OneDrive służbowe i szkolne nie były testowane.
+- Wersje od 0.6.0 do 0.6.3 przeszły całą drogę od początku do końca wyłącznie z emulatorem nagrywarki należącym do projektu, a nie z prawdziwą nagrywarką.
+- Projekt nigdy nie uruchomił obsługi Dysku Google na prawdziwych serwerach Google. Konta OneDrive służbowe i szkolne nie były testowane; nie było też testowane przesyłanie do udostępnionego folderu OneDrive lub SharePoint.
 - Wydania nie są jeszcze podpisane cyfrowo; zobacz [Ostrzeżenie systemu Windows](#smartscreen).
 
 Poza tym jednym zgłoszeniem nie wiadomo, które modele nagrywarek działają ani które nagrania nagrywarka udostępnia do zapisania. Jeśli wypróbujesz aplikację, zgłoszenie dotyczące nagrywarki na [stronie zgłoszeń projektu](https://github.com/lukasz-gratkowski/diga-archive/issues/new/choose) pomoże kolejnym osobom, niezależnie od tego, czy wszystko zadziałało. Formularz zgłoszenia jest po angielsku.
@@ -53,7 +53,7 @@ Poza tym jednym zgłoszeniem nie wiadomo, które modele nagrywarek działają an
 <a name="installer"></a>
 ### Instalator
 
-1. Otwórz [najnowsze wydanie](https://github.com/lukasz-gratkowski/diga-archive/releases/latest) projektu i pobierz plik `DIGA-0.6.2-win-x64-setup.exe`.
+1. Otwórz [najnowsze wydanie](https://github.com/lukasz-gratkowski/diga-archive/releases/latest) projektu i pobierz plik `DIGA-0.6.3-win-x64-setup.exe`.
 2. Uruchom plik. System Windows najpewniej pokaże najpierw ostrzeżenie; zobacz [Ostrzeżenie systemu Windows](#smartscreen).
 3. Wybierz język instalatora: angielski albo polski. To tylko język instalatora. Aplikacja wybiera swój język sama; zobacz [Pierwsze uruchomienie i język](#first-start).
 4. Zaakceptuj licencję. Jest to Powszechna Licencja Publiczna GNU (GNU GPL) w wersji 3, wyświetlana po angielsku.
@@ -85,7 +85,7 @@ FFmpeg to osobny, bezpłatny program do obróbki wideo. Nie jest częścią apli
 
 Dokładne kopie, szczegóły techniczne nagrania i przesyłanie do chmury działają bez FFmpeg.
 
-Jeśli zostawisz opcję zaznaczoną, instalator pobierze jeden, ściśle określony pakiet FFmpeg z wydań jego dystrybutora, Gyana Doshiego, w serwisie GitHub, a jeśli to się nie uda, z gyan.dev. Dla wersji 0.6.2 jest to FFmpeg 9.0.2; pobierany plik ma około 110 MB. Instalator użyje pobranego pliku tylko wtedy, gdy jego suma kontrolna SHA-256 zgadza się z sumą zapisaną w instalatorze, i zainstaluje wyłącznie dwa programy, `ffmpeg.exe` i `ffprobe.exe`, wraz z tekstami licencji. FFmpeg jest objęty licencją GNU GPL w wersji 3.
+Jeśli zostawisz opcję zaznaczoną, instalator pobierze jeden, ściśle określony pakiet FFmpeg z wydań jego dystrybutora, Gyana Doshiego, w serwisie GitHub, a jeśli to się nie uda, z gyan.dev. Dla wersji 0.6.3 jest to FFmpeg 9.0.2; pobierany plik ma około 110 MB. Instalator użyje pobranego pliku tylko wtedy, gdy jego suma kontrolna SHA-256 zgadza się z sumą zapisaną w instalatorze, i zainstaluje wyłącznie dwa programy, `ffmpeg.exe` i `ffprobe.exe`, wraz z tekstami licencji. FFmpeg jest objęty licencją GNU GPL w wersji 3.
 
 - Jeśli pobieranie się nie uda, instalator poda przyczynę i zainstaluje aplikację bez FFmpeg.
 - Jeśli anulujesz pobieranie, instalator zapyta, czy zainstalować aplikację bez FFmpeg.
@@ -96,7 +96,7 @@ FFmpeg możesz dodać w dowolnej chwili później. W aplikacji otwórz **Ustawie
 <a name="portable"></a>
 ### Wersja przenośna (ZIP)
 
-Jeśli wolisz obejść się bez instalatora, pobierz plik `DIGA-0.6.2-win-x64-portable.zip`, rozpakuj go do wybranego folderu i uruchom `Diga.exe`. System Windows może pokazać to samo ostrzeżenie co przy instalatorze.
+Jeśli wolisz obejść się bez instalatora, pobierz plik `DIGA-0.6.3-win-x64-portable.zip`, rozpakuj go do wybranego folderu i uruchom `Diga.exe`. System Windows może pokazać to samo ostrzeżenie co przy instalatorze.
 
 - Pakiet zawiera tę samą aplikację. Nie zawiera FFmpeg; pobierz go na stronie **Ustawienia**, w sekcji **Narzędzia multimedialne · zaawansowane**.
 - „Przenośna” znaczy tylko tyle, że nic nie jest instalowane. Aplikacja nadal przechowuje ustawienia, zapisane logowania, pliki tymczasowe i dziennik błędów w Twoim profilu Windows; zobacz [Gdzie aplikacja przechowuje własne dane](#data).
@@ -122,7 +122,7 @@ Po aktualizacji aplikacja może też pokazać komunikat **Dostępna aktualizacja
 Ta część jest dla osób, które instalują bez kreatora, na przykład skryptem. Instalator przygotowano w programie Inno Setup i przyjmuje on jego standardowe przełączniki.
 
 ```bat
-DIGA-0.6.2-win-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LANG=pl
+DIGA-0.6.3-win-x64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LANG=pl
 ```
 
 | Przełącznik | Działanie |
@@ -482,7 +482,7 @@ Czego się spodziewać:
 - Przed rozpoczęciem aplikacja pyta usługę o wolne miejsce i przerywa, jeśli zaznaczone pliki się nie zmieszczą.
 - Wiersz na dole okna pokazuje przesyłany plik, ilość wysłanych danych, szybkość i pozostały czas. Jeśli połączenie zostanie przerwane, przesyłanie czeka i samo ponawia próby, do 15 minut bez żadnej odpowiedzi, a potem kontynuuje od miejsca, w którym stanęło. W tym czasie wiersz o tym informuje.
 - Przycisk **Anuluj** zatrzymuje przesyłanie. Pliki już przesłane zostają w chmurze. Plik przesyłany w chwili zatrzymania trzeba będzie przesłać od początku.
-- Przesłany plik przestaje być zaznaczony i dostaje wiersz taki jak **Przesłano do usługi OneDrive o 14:05**, z odnośnikiem zaczynającym się od słów **Otwórz w usłudze**. Przy ustawionym udostępnionym folderze odnośnik brzmi **Otwórz udostępniony folder** i otwiera ten folder; działa dla każdego, dla kogo utworzono link do folderu, niezależnie od tego, na jakie konto Microsoft zalogowana jest przeglądarka. Pliki, których nie udało się przesłać, pozostają zaznaczone, a komunikat podaje przyczynę dla każdego.
+- Przesłany plik przestaje być zaznaczony i dostaje wiersz taki jak **Przesłano do usługi OneDrive o 14:05**, z odnośnikiem zaczynającym się od słów **Otwórz w usłudze**. Przy ustawionym udostępnionym folderze odnośnik brzmi **Otwórz udostępniony folder** i otwiera ten folder za pomocą ustawionego przez Ciebie linku udostępniania. O tym, kto może go otworzyć, zdecydowano przy udostępnianiu folderu; rodzaje linków wyjaśnia dokument [Konfiguracja chmury](CLOUD-SETUP.pl.md#shared-folder). Pliki, których nie udało się przesłać, pozostają zaznaczone, a komunikat podaje przyczynę dla każdego.
 - Aplikacja nie rozpoznaje pliku, który już jest w chmurze. Ponowne przesłanie zapisze go tam drugi raz. W obrębie jednej sesji aplikacja najpierw zapyta **Przesłać ponownie?**
 
 O tym, jak dalece sprawdzono łączenie i przesyłanie, mówi część [Jak dalece aplikacja została sprawdzona](#tested).
@@ -584,7 +584,7 @@ Wszystko, co aplikacja przechowuje na własny użytek, znajduje się w jednym fo
 | W tym folderze | Co zawiera |
 |---|---|
 | `settings.json` | Twoje ustawienia: język, foldery, typ pliku, prowadzenie, miejsce docelowe w chmurze, ostatnio użyty sposób zapisu, identyfikator klienta Google i własny identyfikator aplikacji Microsoft (jeśli je wpisano) oraz lokalizacje własnych narzędzi multimedialnych. Nie ma w nim hasła, logowania ani klucza tajnego klienta. |
-| `Accounts` | Zapisane logowania do chmury, a razem z logowaniem Google także klucz tajny klienta Google. System Windows szyfruje je dla Twojego konta Windows. Inne konto ani inny komputer ich nie odczyta. |
+| `Accounts` | Zapisane logowania do chmury, razem z logowaniem Google także klucz tajny klienta Google, oraz link do udostępnionego folderu na przesyłane pliki, jeśli go ustawiono. System Windows szyfruje je dla Twojego konta Windows. Inne konto ani inny komputer ich nie odczyta. |
 | `Cache` | Pliki tymczasowe, o ile na stronie **Ustawienia** nie wskazano innego folderu. Folder jest opróżniany przy zamknięciu aplikacji. |
 | `tools` | FFmpeg, jeśli pobrano go z poziomu aplikacji. |
 | `logs` | Dziennik błędów. |
@@ -600,7 +600,7 @@ Aplikacja nie przechowuje w chmurze niczego poza plikami, które przesyłasz. Ni
 Aby usunąć dane, zamknij aplikację i usuń folder `%LOCALAPPDATA%\Diga` albo tylko wybrane części:
 
 - Usunięcie pliku `settings.json` przywraca wszystkim ustawieniom wartości początkowe.
-- Usunięcie folderu `Accounts` usuwa zapisane logowania z tego komputera. Nie cofa zgody udzielonej w Microsoft ani w Google; gdzie to zrobić, podaje rozdział [Odinstalowanie i co po nim zostaje](#uninstall). Klucz tajny klienta Google znika razem z logowaniem Google.
+- Usunięcie folderu `Accounts` usuwa z tego komputera zapisane logowania oraz link do udostępnionego folderu na przesyłane pliki; pliki trafiają wtedy znów do głównego folderu Twojego OneDrive, dopóki nie ustawisz linku ponownie. Nie cofa zgody udzielonej w Microsoft ani w Google; gdzie to zrobić, podaje rozdział [Odinstalowanie i co po nim zostaje](#uninstall). Klucz tajny klienta Google znika razem z logowaniem Google.
 - Dziennik błędów można też usunąć przyciskiem **Usuń dziennik błędów** na stronie **Ustawienia**.
 
 Większość tych danych usuwa samo odinstalowanie; zobacz [Odinstalowanie i co po nim zostaje](#uninstall).
@@ -734,7 +734,7 @@ Dezinstalator usuwa:
 
 - aplikację i jej folder, w tym FFmpeg pobrany przez instalator;
 - FFmpeg pobrany przez aplikację (`%LOCALAPPDATA%\Diga\tools`);
-- zapisane logowania do chmury (`%LOCALAPPDATA%\Diga\Accounts`), a z nimi klucz tajny klienta Google;
+- zapisane logowania do chmury (`%LOCALAPPDATA%\Diga\Accounts`), a z nimi klucz tajny klienta Google i link do udostępnionego folderu na przesyłane pliki;
 - pliki tymczasowe w folderze domyślnym (`%LOCALAPPDATA%\Diga\Cache`);
 - dziennik błędów (`%LOCALAPPDATA%\Diga\logs`) oraz folder dziennika używany przez wersje do 0.5.2 włącznie (`%LOCALAPPDATA%\DigaArchive`).
 

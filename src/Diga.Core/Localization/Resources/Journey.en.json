@@ -85,6 +85,7 @@
   "Journey.Cloud.Optional": "Optional next step",
   "Journey.Cloud.Title": "A copy in the cloud",
   "Journey.Cloud.Help": "Upload the ticked files to your own OneDrive or Google Drive. Nothing is uploaded until you choose to.",
+  "Journey.Cloud.HelpFolder": "Upload the ticked files to the shared OneDrive folder set in Settings. Nothing is uploaded until you choose to.",
   "Journey.Cloud.UploadTo": "Upload to {0}",
   "Journey.Cloud.AddFiles": "Add files from this PC…",
   "Journey.Cloud.WhereOneDrive": "Files go to the top folder of your OneDrive. If a name is already taken there, OneDrive stores the new file under a different name; nothing is replaced.",

@@ -163,7 +163,7 @@
   "Core.Dlna.Browse.RemoteError": "Błąd usługi ContentDirectory nagrywarki {0}: {1}",
   "Core.Dlna.Download.HttpError": "Nagrywarka nie zwróciła nagrania (HTTP {0}). Odśwież folder i sprawdź ustawienia dostępu nagrywarki.",
   "Core.Cloud.Upload.StartFailed": "Nie udało się rozpocząć przesyłania (HTTP {0}). Sprawdź połączenie, logowanie i wolne miejsce w chmurze. Istniejące pliki w chmurze nie zostały nadpisane.",
-  "Core.Cloud.Upload.FolderRefused": "Usługa OneDrive nie przyjęła pliku w udostępnionym folderze (HTTP {0}). Konto połączone z aplikacją musi mieć prawo dodawania plików do tego folderu: udostępnij folder temu kontu z prawem edycji. Folder należący do innej organizacji może być dla tej aplikacji niedostępny.",
-  "Core.Cloud.Upload.FolderRefusedOwnFiles": "Usługa OneDrive nie przyjęła pliku w udostępnionym folderze (HTTP {0}). Logowanie na tym komputerze obejmuje tylko własne pliki połączonego konta. Jeśli folder należy do kogoś innego, połącz OneDrive ponownie w Ustawieniach, aby Microsoft zapytał o zgodę potrzebną do udostępnionego folderu; konto musi też mieć prawo dodawania plików do tego folderu.",
+  "Core.Cloud.Upload.FolderRefused": "Usługa OneDrive nie przyjęła pliku w udostępnionym folderze (HTTP {0}). Połączone konto musi mieć prawo dodawania tam plików: udostępnij mu folder z prawem edycji.",
+  "Core.Cloud.Upload.FolderRefusedOwnFiles": "Usługa OneDrive nie przyjęła pliku w udostępnionym folderze (HTTP {0}). To logowanie obejmuje tylko własne pliki konta. Jeśli folder należy do kogoś innego, połącz OneDrive ponownie w Ustawieniach.",
   "Core.Cloud.Upload.ChunkFailed": "Nie udało się przesłać fragmentu (HTTP {0}). Sprawdź połączenie, logowanie i wolne miejsce w chmurze. Istniejące pliki w chmurze nie zostały nadpisane."
 }
