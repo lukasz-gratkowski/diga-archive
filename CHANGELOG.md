@@ -8,7 +8,7 @@ A changelog says what changed, not what was tried. How far each part of the appl
 
 ### Changed
 
-- **The logo above the menu has no square behind it.** The mark stood on a dark square whose colour differed slightly from the window's. It now stands directly on the window's background. The Windows icon of the application keeps its square.
+- **The logo above the menu has no square behind it.** The mark stood on a dark navy square, which showed against the window's background in every theme: a little in the dark one, plainly in the light one. It now stands directly on the window's background. The Windows icon of the application keeps its square.
 
 ## [0.6.3] - 2026-10-08
 

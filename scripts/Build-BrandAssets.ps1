@@ -15,7 +15,8 @@ public static class BrandCutout
 {
     const int Corner = 40;      // side of the four squares in which the background colour is measured
     const double Flat = 8;      // a pixel no farther than this from the background colour is background
-    const double Solid = 90;    // a pixel at least this far from it is artwork in full
+    const double Solid = 90;    // a pixel at least this far from it is bright artwork, whose edge against the background is smoothed
+    const double Fade = 16;     // a pixel nearer to it than this is so dark that it can hardly be told from the background
     const int Reach = 4;        // how far a pixel looks for background, and for the artwork it is the edge of
 
     public static byte[] Cut(byte[] source, int width, int height)
@@ -49,20 +50,25 @@ public static class BrandCutout
                 var index = y * width + x;
                 var own = distance[index];
                 if (own <= Flat) continue;
-                // Is background within reach, and which pixel within reach is most surely artwork?
+                // Is background within reach, and which pixel within reach shows most purely the colour this pixel has a share
+                // of? That is the one that reaches farthest from the background in this pixel's own direction, so that a
+                // turquoise edge beside an amber one takes turquoise.
                 var edge = false;
-                var farthest = own;
                 var artwork = index;
+                double reach = own * own;
                 for (var nearY = Math.Max(0, y - Reach); nearY <= Math.Min(height - 1, y + Reach); nearY++)
                     for (var nearX = Math.Max(0, x - Reach); nearX <= Math.Min(width - 1, x + Reach); nearX++)
                     {
                         var near = nearY * width + nearX;
-                        if (distance[near] <= Flat) edge = true;
-                        else if (distance[near] > farthest) { farthest = distance[near]; artwork = near; }
+                        if (distance[near] <= Flat) { edge = true; continue; }
+                        double shared = 0;
+                        for (var channel = 0; channel < 3; channel++)
+                            shared += (source[near * 4 + channel] - background[channel]) * (source[index * 4 + channel] - background[channel]);
+                        if (shared > reach) { reach = shared; artwork = near; }
                     }
                 double alpha;
                 var colour = new double[3];
-                if (edge && farthest >= Solid)
+                if (edge && distance[artwork] >= Solid)
                 {
                     // The smoothed edge of solid artwork: the artwork's colour, as much of it as the pixel holds.
                     double along = 0, length = 0;
@@ -75,15 +81,17 @@ public static class BrandCutout
                     }
                     alpha = Math.Max(0, Math.Min(1, along / length));
                 }
-                else if (own >= Solid)
+                else if (own >= Fade)
                 {
+                    // Artwork, the dark faces of the ribbon included: it stays as it is on every background.
                     alpha = 1;
                     for (var channel = 0; channel < 3; channel++) colour[channel] = source[index * 4 + channel];
                 }
                 else
                 {
-                    // A shadow that fades into the background: it keeps its look on that background and fades into any other.
-                    alpha = (own - Flat) / (Solid - Flat);
+                    // The darkest end of a shadow, almost the background's own colour. Left solid it would end in a step on a
+                    // background of another colour, so it fades out; on the master's background it looks as before.
+                    alpha = (own - Flat) / (Fade - Flat);
                     for (var channel = 0; channel < 3; channel++)
                         colour[channel] = Math.Max(0, Math.Min(255, background[channel] + (source[index * 4 + channel] - background[channel]) / alpha));
                 }
