@@ -183,7 +183,10 @@ public sealed class FfmpegInstallerTests : IDisposable
             await Task.Delay(Timeout.Infinite, token);
             return Bytes(zip);
         }));
-        await new FfmpegInstaller(http, Describe(zip)) { StallTimeout = TimeSpan.FromMilliseconds(200) }.InstallAsync(_directory);
+        // The limit applies to the second address as well. On a build machine that is short of threads, an answer that is
+        // already in memory has taken longer than a fifth of a second to arrive, and the good server was then given up too;
+        // the limit is long enough for that, and the test waits it out once, for the server that never sends.
+        await new FfmpegInstaller(http, Describe(zip)) { StallTimeout = TimeSpan.FromSeconds(5) }.InstallAsync(_directory);
         Assert.Equal([First, Second], calls);
         Assert.Equal(4, Installed().Length);
     }
