@@ -6,9 +6,16 @@ A changelog says what changed, not what was tried. How far each part of the appl
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.6.4] - 2026-10-08
+
+The logo above the menu loses the square behind it, and the pictures in the guides are taken anew. Like the versions before it, this one has run from start to finish only against the project's recorder emulator, and its installer is not digitally signed.
+
 ### Changed
 
 - **The logo above the menu has no square behind it.** The mark stood on a dark navy square, which showed against the window's background in every theme: a little in the dark one, plainly in the light one. It now stands directly on the window's background. The Windows icon of the application keeps its square.
+- **The pictures in the guides are taken anew.** They show the application as it is now, and the Polish ones no longer have the message of the step before lying over the top of the page.
 
 ## [0.6.3] - 2026-10-08
 
