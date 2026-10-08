@@ -135,6 +135,11 @@
   "Core.Cloud.Browse.Failed": "Could not list the files in the cloud (HTTP {0}).",
   "Core.Cloud.Browse.Unavailable": "The cloud service kept refusing to list the files (HTTP {0}). Try again later.",
   "Core.Cloud.Browse.UnexpectedHost": "The cloud service pointed to an unexpected server for the next page of the list ({0}). Nothing was sent to it.",
+  "Core.Cloud.Folder.LinkInvalid": "Paste the whole link to the shared folder; it begins with https://.",
+  "Core.Cloud.Folder.OneDriveOnly": "A folder for uploads can be set for OneDrive only.",
+  "Core.Cloud.Folder.Failed": "OneDrive did not open the folder behind this link (HTTP {0}). Check that the link is complete, that it leads to a folder, and that the folder is shared with the account connected here.",
+  "Core.Cloud.Folder.FailedOwnFiles": "OneDrive did not open the folder behind this link (HTTP {0}). Check that the link is complete, that it leads to a folder, and that the folder is shared with the account connected here. The sign-in on this PC reaches only that account's own files; if the folder belongs to someone else, connect OneDrive again in Settings, so that Microsoft is asked for the permission a shared folder needs.",
+  "Core.Cloud.Folder.NotAFolder": "This link does not lead to a folder. Share the folder itself and paste its link.",
   "Core.Media.Remux.Failed": "FFmpeg could not write this file. Nothing was converted. Try the MKV file type, or save an exact copy. Technical detail: {0}",
   "Core.Media.Remux.Stalled": "FFmpeg made no progress for {0} minutes and was stopped. Nothing was converted. Try again, or save an exact copy.",
   "Core.Media.Remux.IncompatibleStream": "A file of type {0} cannot hold this part of the recording: {1} ({2}). Choose MKV, which suits almost every recording, or save an exact copy.",
@@ -158,5 +163,7 @@
   "Core.Dlna.Browse.RemoteError": "Recorder ContentDirectory error {0}: {1}",
   "Core.Dlna.Download.HttpError": "The recorder did not return a recording (HTTP {0}). Refresh the folder and check the recorder's access settings.",
   "Core.Cloud.Upload.StartFailed": "Could not start upload (HTTP {0}). Check your connection, sign-in, and cloud storage space. Existing cloud files were not overwritten.",
+  "Core.Cloud.Upload.FolderRefused": "OneDrive did not accept the file in the shared folder (HTTP {0}). The account connected here must be allowed to add files to that folder: share the folder with this account for editing. A folder that belongs to another organisation can be out of this application's reach.",
+  "Core.Cloud.Upload.FolderRefusedOwnFiles": "OneDrive did not accept the file in the shared folder (HTTP {0}). The sign-in on this PC reaches only the connected account's own files. If the folder belongs to someone else, connect OneDrive again in Settings, so that Microsoft is asked for the permission a shared folder needs; the account must also be allowed to add files to that folder.",
   "Core.Cloud.Upload.ChunkFailed": "Could not upload chunk (HTTP {0}). Check your connection, sign-in, and cloud storage space. Existing cloud files were not overwritten."
 }

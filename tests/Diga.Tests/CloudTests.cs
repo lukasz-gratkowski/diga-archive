@@ -147,6 +147,147 @@ public sealed class CloudTests : IDisposable
         await Assert.ThrowsAsync<InvalidDataException>(() => new CloudUploadService(http).UploadAsync(new(Account(CloudProvider.GoogleDrive), path)));
         Assert.Equal(2, calls);
     }
+    [Fact] public async Task UploadIntoASharedFolderAddressesTheFolderByItsDriveAndItsId()
+    {
+        var path = CreateFile(10, "2026-0142.mkv");
+        var folder = new CloudFolder("b!drive of anna", "01FOLDER!7", "Recordings", new Uri("https://contoso-my.sharepoint.com/:f:/g/personal/anna/Eh?e=1"));
+        var calls = new List<(string Method, string Uri, string? Authorization)>();
+        using var http = new HttpClient(new Handler(request =>
+        {
+            calls.Add((request.Method.Method, request.RequestUri!.OriginalString, request.Headers.Authorization?.ToString()));
+            return Task.FromResult(request.Method == HttpMethod.Post
+                ? Json(HttpStatusCode.OK, "{\"uploadUrl\":\"https://contoso-my.sharepoint.com/personal/anna/_api/v2.0/drive/items/01FOLDER/uploadSession?guid=1\"}")
+                : Json(HttpStatusCode.Created, "{\"id\":\"done\",\"name\":\"2026-0142.mkv\",\"webUrl\":\"https://contoso-my.sharepoint.com/personal/anna/Documents/Recordings/2026-0142.mkv\"}"));
+        }));
+        var result = await new CloudUploadService(http).UploadAsync(new(Account(CloudProvider.OneDrive), path, folder));
+        Assert.Equal("done", result.Id);
+        Assert.Equal(2, calls.Count);
+        Assert.Equal(("POST", "https://graph.microsoft.com/v1.0/drives/b%21drive%20of%20anna/items/01FOLDER%217:/2026-0142.mkv:/createUploadSession", "Bearer access-token"), calls[0]);
+        // The bytes go to the address OneDrive handed out, without the sign-in.
+        Assert.Equal(("PUT", "https://contoso-my.sharepoint.com/personal/anna/_api/v2.0/drive/items/01FOLDER/uploadSession?guid=1", (string?)null), calls[1]);
+    }
+
+    [Theory] [InlineData(HttpStatusCode.Forbidden)] [InlineData(HttpStatusCode.NotFound)]
+    public async Task ASharedFolderThatRefusesTheFileSaysWhoMustBeAllowedToWrite(HttpStatusCode status)
+    {
+        var path = CreateFile(10, "2026-0142.mkv");
+        var folder = new CloudFolder("b!d", "01FOLDER", "Recordings", new Uri("https://1drv.ms/f/s!AkxYzExample"));
+        var calls = 0;
+        using var http = new HttpClient(new Handler(_ => { calls++; return Task.FromResult(Json(status, "{\"error\":{\"code\":\"accessDenied\",\"message\":\"Access denied\"}}")); }));
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => new CloudUploadService(http).UploadAsync(new(Account(CloudProvider.OneDrive) with { SharedFiles = true }, path, folder)));
+        Assert.StartsWith(Diga.Core.Localization.AppText.T("Core.Cloud.Upload.FolderRefused", (int)status), error.Message, StringComparison.Ordinal);
+        Assert.Contains("Access denied", error.Message, StringComparison.Ordinal);
+        // A refusal is an answer: it is not asked again.
+        Assert.Equal(1, calls);
+        // A sign-in that reaches only the account's own files is the likeliest reason, and the message says how to change it.
+        var own = await Assert.ThrowsAsync<InvalidOperationException>(() => new CloudUploadService(http).UploadAsync(new(Account(CloudProvider.OneDrive), path, folder)));
+        Assert.StartsWith(Diga.Core.Localization.AppText.T("Core.Cloud.Upload.FolderRefusedOwnFiles", (int)status), own.Message, StringComparison.Ordinal);
+        Assert.Contains("Access denied", own.Message, StringComparison.Ordinal);
+        Assert.Equal(2, calls);
+        // The top folder keeps the general message.
+        var top = await Assert.ThrowsAsync<InvalidOperationException>(() => new CloudUploadService(http).UploadAsync(new(Account(CloudProvider.OneDrive), path)));
+        Assert.StartsWith(Diga.Core.Localization.AppText.T("Core.Cloud.Upload.StartFailed", (int)status), top.Message, StringComparison.Ordinal);
+        // Google has no such folder, and nothing is sent to find that out.
+        await Assert.ThrowsAsync<ArgumentException>(() => new CloudUploadService(http).UploadAsync(new(Account(CloudProvider.GoogleDrive), path, folder)));
+        Assert.Equal(3, calls);
+    }
+
+    // What is asked for at sign-in, what Microsoft says it gave, and what the application then takes the sign-in to reach.
+    [Theory]
+    [InlineData(false, null, "Files.ReadWrite", false)]
+    [InlineData(true, null, "Files.ReadWrite.All", true)]
+    [InlineData(true, "https://graph.microsoft.com/Files.ReadWrite.All", "Files.ReadWrite.All", true)]
+    [InlineData(true, "Files.ReadWrite", "Files.ReadWrite.All", false)]
+    [InlineData(false, "files.readwrite Files.ReadWrite.All", "Files.ReadWrite", true)]
+    [InlineData(false, "https://graph.microsoft.com/Sites.ReadWrite.All Files.ReadWrite", "Files.ReadWrite", false)]
+    public async Task AFolderForUploadsMakesTheSignInAskForSharedFilesAndARenewalAsksForWhatWasGiven(bool asked, string? given, string expectedPermission, bool reachesSharedFiles)
+    {
+        var tokens = new MemoryTokens();
+        var grants = new List<Dictionary<string, string>>();
+        Task? callback = null;
+        using var http = new HttpClient(new Handler(async request =>
+        {
+            if (request.Method != HttpMethod.Post) return Json(HttpStatusCode.OK, "{\"driveType\":\"business\"}");
+            grants.Add(ParseQuery(await request.Content!.ReadAsStringAsync()));
+            return Json(HttpStatusCode.OK, "{\"access_token\":\"access\",\"refresh_token\":\"refresh\",\"expires_in\":1" + (given is null ? "" : ",\"scope\":\"" + given + "\"") + "}");
+        }));
+        var auth = new CloudAuthService(http, tokens, uri =>
+        {
+            var query = ParseQuery(uri.Query.TrimStart('?'));
+            Assert.Equal("offline_access https://graph.microsoft.com/" + expectedPermission, query["scope"]);
+            callback = Task.Run(async () =>
+            {
+                using var loopback = new HttpClient();
+                using var valid = await loopback.GetAsync(query["redirect_uri"] + "/?code=test-code&state=" + Uri.EscapeDataString(query["state"]));
+            });
+        });
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        var account = await auth.AuthenticateAsync(new OAuthClientOptions(CloudProvider.OneDrive, "test-client", SharedFiles: asked), timeout.Token);
+        await callback!;
+        Assert.Equal(reachesSharedFiles, account.SharedFiles);
+        Assert.Equal(reachesSharedFiles, tokens.Saved!.SharedFiles);
+        // Asking a renewal for more than was given would end the sign-in; asking for less would lose the folder.
+        var renewed = await auth.RefreshAsync(account, timeout.Token);
+        Assert.Equal(2, grants.Count);
+        Assert.False(grants[0].ContainsKey("scope"));
+        Assert.Equal("offline_access https://graph.microsoft.com/" + (reachesSharedFiles ? "Files.ReadWrite.All" : "Files.ReadWrite"), grants[1]["scope"]);
+        Assert.Equal(reachesSharedFiles, renewed.SharedFiles);
+    }
+
+    [Fact] public async Task GoogleIsNeverAskedForSharedFiles()
+    {
+        var tokens = new MemoryTokens();
+        Task? callback = null;
+        using var http = new HttpClient(new Handler(request => Task.FromResult(request.Method == HttpMethod.Post
+            ? Json(HttpStatusCode.OK, "{\"access_token\":\"access\",\"refresh_token\":\"refresh\",\"expires_in\":3600,\"scope\":\"Files.ReadWrite.All\"}")
+            : Json(HttpStatusCode.OK, "{}"))));
+        var auth = new CloudAuthService(http, tokens, uri =>
+        {
+            var query = ParseQuery(uri.Query.TrimStart('?'));
+            Assert.Equal("https://www.googleapis.com/auth/drive.file", query["scope"]);
+            callback = Task.Run(async () =>
+            {
+                using var loopback = new HttpClient();
+                using var valid = await loopback.GetAsync(query["redirect_uri"] + "/?code=test-code&state=" + Uri.EscapeDataString(query["state"]));
+            });
+        });
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        var account = await auth.AuthenticateAsync(new OAuthClientOptions(CloudProvider.GoogleDrive, "test-client", "test-secret", SharedFiles: true), timeout.Token);
+        await callback!;
+        Assert.False(account.SharedFiles);
+    }
+
+    [Fact] public async Task TheLinkToTheFolderForUploadsIsKeptEncryptedAndIsNotASignIn()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var directory = Path.Combine(_directory, "folder-link");
+        var store = new CloudFolderLinkStore(directory);
+        const string link = "https://contoso-my.sharepoint.com/:f:/g/personal/anna_contoso_com/EhK9aZ7xQ0?e=ab12Cd";
+        Assert.Null(await store.LoadAsync(CloudProvider.OneDrive));
+        await store.SaveAsync(CloudProvider.OneDrive, "  " + link + " ");
+        Assert.Equal(link, await store.LoadAsync(CloudProvider.OneDrive));
+        Assert.Null(await store.LoadAsync(CloudProvider.GoogleDrive));
+        var file = Assert.Single(Directory.GetFiles(directory));
+        var stored = await File.ReadAllBytesAsync(file);
+        Assert.DoesNotContain("sharepoint", Encoding.UTF8.GetString(stored), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("sharepoint", Encoding.Unicode.GetString(stored), StringComparison.OrdinalIgnoreCase);
+        // Disconnect removes sign-ins. Where uploads go is a setting, and it stays.
+        var signIns = new ProtectedTokenStore(directory);
+        Assert.False(signIns.HasAny(CloudProvider.OneDrive));
+        await signIns.DeleteAsync(CloudProvider.OneDrive, "client");
+        Assert.Equal(link, await store.LoadAsync(CloudProvider.OneDrive));
+        // What is not a whole https address is not saved, and a file that cannot be read counts as nothing saved.
+        await Assert.ThrowsAsync<ArgumentException>(() => store.SaveAsync(CloudProvider.OneDrive, "contoso.sharepoint.com/folder"));
+        Assert.Equal(link, await store.LoadAsync(CloudProvider.OneDrive));
+        await File.WriteAllBytesAsync(file, [1, 2, 3]);
+        Assert.Null(await store.LoadAsync(CloudProvider.OneDrive));
+        // An empty link removes the file: uploads go to the top folder again.
+        await store.SaveAsync(CloudProvider.OneDrive, link);
+        await store.SaveAsync(CloudProvider.OneDrive, " ");
+        Assert.Null(await store.LoadAsync(CloudProvider.OneDrive));
+        Assert.Empty(Directory.GetFiles(directory));
+    }
+
     [Fact] public async Task ProtectedStoreEncryptsTokensForCurrentWindowsUser()
     {
         if (!OperatingSystem.IsWindows()) return;

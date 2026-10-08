@@ -358,6 +358,143 @@ public sealed class CloudBrowseTests
         }
     }
 
+    private const string SharePointLink = "https://contoso-my.sharepoint.com/:f:/g/personal/anna_contoso_com/EhK9aZ7xQ0?e=ab12Cd";
+    private const string SharePointToken = "u!aHR0cHM6Ly9jb250b3NvLW15LnNoYXJlcG9pbnQuY29tLzpmOi9nL3BlcnNvbmFsL2FubmFfY29udG9zb19jb20vRWhLOWFaN3hRMD9lPWFiMTJDZA";
+
+    [Theory]
+    [InlineData("https://1drv.ms/f/s!AkxYzExample", true)]
+    [InlineData("  " + SharePointLink + "  ", true)]
+    [InlineData("https://onedrive.live.com/redir?resid=1231244193912!12&authKey=1201919!12921!1", true)]
+    [InlineData("", false)]
+    [InlineData("   ", false)]
+    [InlineData("contoso-my.sharepoint.com/:f:/g/personal/x", false)]
+    [InlineData("http://1drv.ms/f/s!AkxYz", false)]
+    [InlineData("https://user:secret@1drv.ms/f/s!AkxYz", false)]
+    [InlineData("https://1drv.ms:8443/f/s!AkxYz", false)]
+    [InlineData("file:///C:/Users/someone/Videos", false)]
+    public void OnlyAWholeHttpsAddressCountsAsAFolderLink(string text, bool accepted)
+    {
+        Assert.Equal(accepted, CloudBrowseService.TryParseFolderLink(text, out var link));
+        Assert.Equal(accepted, link is not null);
+        Assert.False(CloudBrowseService.TryParseFolderLink("https://1drv.ms/f/" + new string('a', 2048), out _));
+    }
+
+    [Fact]
+    public void ASharingLinkIsEncodedAsMicrosoftDescribes()
+    {
+        // The example of Microsoft's own page on shared items, and a SharePoint link.
+        Assert.Equal("u!aHR0cHM6Ly9vbmVkcml2ZS5saXZlLmNvbS9yZWRpcj9yZXNpZD0xMjMxMjQ0MTkzOTEyITEyJmF1dGhLZXk9MTIwMTkxOSExMjkyMSEx",
+            CloudBrowseService.ShareToken(new Uri("https://onedrive.live.com/redir?resid=1231244193912!12&authKey=1201919!12921!1")));
+        Assert.Equal(SharePointToken, CloudBrowseService.ShareToken(new Uri(SharePointLink)));
+    }
+
+    [Fact]
+    public async Task AFolderLinkIsLookedUpWithOneGetThatAlsoAcceptsTheLink()
+    {
+        var calls = new List<HttpRequestMessage>();
+        using var http = Client(request =>
+        {
+            calls.Add(request);
+            return Json(HttpStatusCode.OK, """{"id":"01FOLDER","name":"Recordings 2026","folder":{"childCount":4},"parentReference":{"driveId":"b!drive-of-anna","id":"01ROOT"}}""");
+        });
+        var folder = await Service(http).ResolveFolderAsync(Account(CloudProvider.OneDrive), new Uri(SharePointLink));
+        var call = Assert.Single(calls);
+        Assert.Equal(HttpMethod.Get, call.Method);
+        Assert.Equal("https://graph.microsoft.com/v1.0/shares/" + SharePointToken + "/driveItem?$select=id,name,folder,file,package,parentReference,remoteItem", call.RequestUri!.OriginalString);
+        Assert.Equal("Bearer access-token", call.Headers.Authorization!.ToString());
+        Assert.Equal("redeemSharingLink", Assert.Single(call.Headers.GetValues("Prefer")));
+        Assert.Null(call.Content);
+        Assert.Equal(("b!drive-of-anna", "01FOLDER", "Recordings 2026", new Uri(SharePointLink)), (folder.DriveId, folder.ItemId, folder.Name, folder.Link));
+    }
+
+    [Fact]
+    public async Task AFolderSharedByAnotherAccountIsTakenFromThePointerToIt()
+    {
+        using var http = Client(_ => Json(HttpStatusCode.OK, """
+            {"id":"LOCAL!1","name":"Shared with me","remoteItem":{"id":"REMOTE!77","name":"Family films","folder":{"childCount":2},"parentReference":{"driveId":"abcdef0123456789"}}}
+            """));
+        var folder = await Service(http).ResolveFolderAsync(Account(CloudProvider.OneDrive), new Uri("https://1drv.ms/f/s!AkxYzExample"));
+        Assert.Equal(("abcdef0123456789", "REMOTE!77", "Family films"), (folder.DriveId, folder.ItemId, folder.Name));
+    }
+
+    [Theory]
+    // A file, not a folder.
+    [InlineData("""{"id":"01FILE","name":"film.mkv","file":{"mimeType":"video/x-matroska"},"parentReference":{"driveId":"b!d"}}""", "Core.Cloud.Folder.NotAFolder")]
+    // A folder whose answer does not say where it is, or says it in a form that cannot be part of an address.
+    [InlineData("""{"id":"01FOLDER","name":"Recordings","folder":{}}""", "Core.Cloud.Browse.UnexpectedResponse")]
+    [InlineData("""{"id":"01/../x","name":"Recordings","folder":{},"parentReference":{"driveId":"b!d"}}""", "Core.Cloud.Browse.UnexpectedResponse")]
+    [InlineData("""{"id":"01FOLDER","name":"Recordings","folder":{},"parentReference":{"driveId":"b!d?x=1"}}""", "Core.Cloud.Browse.UnexpectedResponse")]
+    [InlineData("""["not","an","object"]""", "Core.Cloud.Browse.UnexpectedResponse")]
+    [InlineData("<html>a proxy's page</html>", "Core.Cloud.Browse.UnexpectedResponse")]
+    public async Task AnAnswerThatIsNotAUsableFolderIsRefusedInTheApplicationsWords(string answer, string messageKey)
+    {
+        using var http = Client(_ => Json(HttpStatusCode.OK, answer));
+        var error = await Assert.ThrowsAsync<InvalidDataException>(() => Service(http).ResolveFolderAsync(Account(CloudProvider.OneDrive), new Uri(SharePointLink)));
+        Assert.Equal(Diga.Core.Localization.AppText.T(messageKey), error.Message);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.Forbidden, "accessDenied", "The sharing link no longer exists, or you do not have permission to access it.")]
+    [InlineData(HttpStatusCode.NotFound, "itemNotFound", "The resource could not be found.")]
+    [InlineData(HttpStatusCode.BadRequest, "invalidRequest", "The sharing link is malformed.")]
+    public async Task ALinkOneDriveDoesNotOpenIsReportedWithItsReason(HttpStatusCode status, string code, string reason)
+    {
+        var calls = 0;
+        using var http = Client(_ => { calls++; return Json(status, "{\"error\":{\"code\":\"" + code + "\",\"message\":\"" + reason + "\"}}"); });
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => Service(http).ResolveFolderAsync(Account(CloudProvider.OneDrive) with { SharedFiles = true }, new Uri(SharePointLink)));
+        Assert.StartsWith(Diga.Core.Localization.AppText.T("Core.Cloud.Folder.Failed", (int)status), error.Message, StringComparison.Ordinal);
+        Assert.Contains(reason, error.Message, StringComparison.Ordinal);
+        Assert.IsNotType<CloudSignInExpiredException>(error);
+        // A refusal is an answer; it is not asked again.
+        Assert.Equal(1, calls);
+        // A sign-in that reaches only the account's own files is told how to get the wider one.
+        var own = await Assert.ThrowsAsync<InvalidOperationException>(() => Service(http).ResolveFolderAsync(Account(CloudProvider.OneDrive), new Uri(SharePointLink)));
+        Assert.StartsWith(Diga.Core.Localization.AppText.T("Core.Cloud.Folder.FailedOwnFiles", (int)status), own.Message, StringComparison.Ordinal);
+        Assert.Contains(reason, own.Message, StringComparison.Ordinal);
+        Assert.Equal(2, calls);
+    }
+
+    [Fact]
+    public async Task AFolderIsOnlyForOneDriveAndASignInThatEndedIsSaidAsThat()
+    {
+        using var none = Client(_ => throw new InvalidOperationException("No request is expected."));
+        await Assert.ThrowsAsync<ArgumentException>(() => Service(none).ResolveFolderAsync(Account(CloudProvider.GoogleDrive), new Uri(SharePointLink)));
+        var shared = new CloudFolder("b!d", "01FOLDER", "Recordings", new Uri(SharePointLink));
+        await Assert.ThrowsAsync<ArgumentException>(() => Service(none).ListAsync(Account(CloudProvider.GoogleDrive), shared));
+        await Assert.ThrowsAsync<ArgumentException>(() => Service(none).GetFreeSpaceAsync(Account(CloudProvider.GoogleDrive), shared));
+        using var refused = Client(_ => Json(HttpStatusCode.Unauthorized, """{"error":{"code":"InvalidAuthenticationToken","message":"Access token has expired."}}"""));
+        await Assert.ThrowsAsync<CloudSignInExpiredException>(() => Service(refused).ResolveFolderAsync(Account(CloudProvider.OneDrive), new Uri(SharePointLink)));
+    }
+
+    [Fact]
+    public async Task TheFolderForUploadsIsListedAndAskedForItsRoomByItsDriveAndItsId()
+    {
+        var folder = new CloudFolder("b!drive of anna", "01FOLDER!7", "Recordings", new Uri(SharePointLink));
+        var calls = new List<string>();
+        using var http = Client(request =>
+        {
+            calls.Add(request.RequestUri!.OriginalString);
+            return request.RequestUri.AbsolutePath.EndsWith("/children", StringComparison.Ordinal)
+                ? Json(HttpStatusCode.OK, """{"value":[{"id":"9","name":"2026-0142.mkv","size":5,"file":{},"webUrl":"https://contoso-my.sharepoint.com/personal/anna/Documents/Recordings/2026-0142.mkv"}]}""")
+                : Json(HttpStatusCode.OK, """{"quota":{"remaining":123456}}""");
+        });
+        var listing = await Service(http).ListAsync(Account(CloudProvider.OneDrive), folder);
+        Assert.Equal("2026-0142.mkv", Assert.Single(listing.Items).Name);
+        Assert.Equal(123456, await Service(http).GetFreeSpaceAsync(Account(CloudProvider.OneDrive), folder));
+        Assert.Equal(
+        [
+            "https://graph.microsoft.com/v1.0/drives/b%21drive%20of%20anna/items/01FOLDER%217/children?$select=id,name,size,lastModifiedDateTime,file,folder,package,remoteItem,webUrl&$top=200",
+            "https://graph.microsoft.com/v1.0/drives/b%21drive%20of%20anna?$select=quota"
+        ], calls);
+        // Another account's drive may take files without saying how much room it has; that is not a reason to stop.
+        using var silent = Client(_ => Json(HttpStatusCode.Forbidden, """{"error":{"code":"accessDenied","message":"Access denied"}}"""));
+        Assert.Null(await Service(silent).GetFreeSpaceAsync(Account(CloudProvider.OneDrive), folder));
+        // The account's own drive is asked as before when no folder is set.
+        calls.Clear();
+        await Service(http).GetFreeSpaceAsync(Account(CloudProvider.OneDrive), null);
+        Assert.Equal(["https://graph.microsoft.com/v1.0/me/drive?$select=quota"], calls);
+    }
+
     private static CloudBrowseService Service(HttpClient http) =>
         new(http, new CloudAuthService(http, new MemoryTokens())) { MinimumRetryDelay = TimeSpan.FromMilliseconds(1) };
     private static HttpClient Client(Func<HttpRequestMessage, HttpResponseMessage> handle) => new(new Handler(request => Task.FromResult(handle(request))));

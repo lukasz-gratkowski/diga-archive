@@ -8,7 +8,7 @@ AMG DIGA Archive can upload the recordings it saved to **your own** OneDrive or 
 |---|---|---|---|
 | Setup before the first sign-in | none | about 20 minutes, once | about 15 minutes, once |
 | What you need | a Microsoft account | a Microsoft account, and for a personal account a free Azure sign-up (phone and payment card for identity checks) | a Google account with 2-Step Verification |
-| What the application may access | your OneDrive files | your OneDrive files | only the files it uploaded itself |
+| What the application may access | your OneDrive files; with a [shared folder](#shared-folder) set, all files your account can access | the same | only the files it uploaded itself |
 | How long the sign-in lasts | until you disconnect or stop using it for a long time | the same | 7 days, unless you publish your Google project |
 | Recommended for | almost everyone | organisations that block the built-in ID, or people who prefer their own | people who keep their archive in Google Drive |
 
@@ -24,6 +24,7 @@ Portal labels change; where Microsoft's own pages show two generations of a labe
 - [OneDrive, the quick way](#onedrive-the-quick-way)
 - [OneDrive with your own registration](#onedrive-with-your-own-registration)
 - [Work or school accounts](#work-or-school-accounts)
+- [A shared folder for uploads](#shared-folder)
 - [If OneDrive sign-in fails](#if-onedrive-sign-in-fails)
 - [Google Drive](#google-drive)
 - [If Google sign-in fails](#if-google-sign-in-fails)
@@ -52,6 +53,8 @@ The application has a Microsoft registration built in, so there is nothing to re
 5. The browser shows one line of text saying that the application has received the sign-in. Close the tab and return to the application. The card now shows **Connected · OneDrive (personal)** or **Connected · OneDrive (work or school)**, followed by the name of the drive's owner.
 
 The application uses the permission to add new files to the top folder of your OneDrive, to list that folder, and to ask for the kind of drive, its owner's name and its free space. It never changes or deletes a file that is already there: if a file with the same name exists, OneDrive stores the new one under a different name.
+
+Uploads can go to one shared folder instead of the top folder; see [A shared folder for uploads](#shared-folder). With such a folder set, Microsoft's page in step 4 asks about all files you can access, not only your own.
 
 To use another Microsoft account later, choose **Connect OneDrive** again and pick the other account on Microsoft's page. There is no need to disconnect first.
 
@@ -90,7 +93,7 @@ The free account is offered once, to people who are new to Azure. If you had Azu
     - Enter it exactly: `http`, not `https`; no port, no slash, no path. Do not use `127.0.0.1` here, although one of Microsoft's pages recommends it: the application sends `localhost`.
     - Do not add it under **Web** or **Single-page application**.
 12. Leave **Allow public client flows** off (it is on the **Settings** tab of the Authentication page in the new layout and under **Advanced settings** in the old one). Do not create anything under **Certificates & secrets**: the application uses no secret for OneDrive.
-13. Open **API permissions → Add a permission → Microsoft Graph → Delegated permissions**, tick **Files.ReadWrite** and **offline_access**, then **Add permissions**. Keep the **User.Read** entry Microsoft added. For a personal account this step is optional, because the application asks for the two permissions at sign-in anyway; it matters when an organisation's administrator has to approve the application.
+13. Open **API permissions → Add a permission → Microsoft Graph → Delegated permissions**, tick **Files.ReadWrite** and **offline_access**, then **Add permissions**. If uploads are to go to a [shared folder](#shared-folder), tick **Files.ReadWrite.All** as well. Keep the **User.Read** entry Microsoft added. For a personal account this step is optional, because the application asks for the permissions it needs at sign-in anyway; it matters when an organisation's administrator has to approve the application.
 14. Wait about five minutes. Microsoft's changes are not instant.
 
 ### Part C: connect in the application
@@ -117,11 +120,71 @@ This section is based on Microsoft's documentation; the project has not tried a 
 
 Many organisations do not let their members approve an application themselves, or allow it only for applications from verified publishers. Microsoft also treats a recently registered application that asks for more than basic sign-in, has no verified publisher and comes from another organisation as risky. In those cases you see **Need admin approval** (or an error such as `AADSTS90094`, `AADSTS90093` or `AADSTS900941`) instead of the permission page. What you can do:
 
-- **Ask your administrator** to approve the application. They can do it in the Entra admin centre under **Enterprise apps**, or with Microsoft's admin-consent address; see Microsoft's [Grant tenant-wide admin consent](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/grant-admin-consent). Give them the application ID. The built-in one of this version is `bfd21bf0-32a9-4520-8bbb-d525e3d34aea`; the application shows it in **Settings**, in the section **Using your own Microsoft registration**. The permissions are the delegated Microsoft Graph permissions **Files.ReadWrite** and **offline_access**.
+- **Ask your administrator** to approve the application. They can do it in the Entra admin centre under **Enterprise apps**, or with Microsoft's admin-consent address; see Microsoft's [Grant tenant-wide admin consent](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/grant-admin-consent). Give them the application ID. The built-in one of this version is `bfd21bf0-32a9-4520-8bbb-d525e3d34aea`; the application shows it in **Settings**, in the section **Using your own Microsoft registration**. The permissions are the delegated Microsoft Graph permissions **Files.ReadWrite** and **offline_access**, and **Files.ReadWrite.All** in place of the first when a [shared folder](#shared-folder) is set.
 - **Register your own application inside your organisation's directory** (Part B above, if your organisation lets members register applications). Microsoft's rules about unverified publishers do not apply to an application registered in your own organisation.
 - If your organisation uses an approval workflow you see **Approval required** with a text box: send the request and wait for the e-mail.
 
 Errors that mention Conditional Access or multi-factor sign-in (`AADSTS53003`, `AADSTS50076`) come from your organisation's own rules; only its IT department can change them.
+
+<a name="shared-folder"></a>
+## A shared folder for uploads
+
+Without further setup, uploads go to the top folder of the connected account's own OneDrive. You can send them to one shared folder instead: a folder in someone's OneDrive, or in a SharePoint document library, that several people can reach. Each person then uploads with their own Microsoft account, and all recordings arrive in the same place. Google Drive has no such setting.
+
+**How far this has been tested.** The shared folder has run only against simulated Microsoft servers in the project's automated tests. Nobody has yet reported using it with a real OneDrive or SharePoint folder. What this section says about Microsoft's side follows Microsoft's documentation as it read on 8 October 2026; what it says about the application is taken from the application's code.
+
+### Set it up
+
+1. **Choose the folder.** On the OneDrive website, or in a SharePoint document library, create or pick the folder that should receive the recordings.
+2. **Share it and copy its link.** Select the folder and choose **Share**. Set who the link works for (Microsoft's choices are **Anyone**, **People in** your organisation **with the link**, **People with existing access** and **Specific people**; an organisation can switch some of them off) and choose **Copy Link**. Everyone who will upload needs the right to *edit*, because adding a file is an edit. People who should only look at the recordings need only the right to view.
+3. **Paste the link.** In the application open **Settings** and scroll to the card **Microsoft OneDrive**. Paste the link into **Folder for uploads (optional)**. It must be the whole address, beginning with `https://`.
+4. **Connect.** Choose **Connect OneDrive**, also when OneDrive was connected before: with a folder set, the application asks Microsoft for the files that are shared with your account as well as your own, and Microsoft's page says so. See [Which accounts can use a shared folder](#which-accounts-can-use-a-shared-folder) for when this matters.
+5. **Check.** Choose **Save & check the folder**. The application asks OneDrive, as the connected account, which folder the link leads to, and answers **Folder found** with the folder's name. Then upload one small file from **Archive**: whether the account may add files to the folder shows only with the first upload.
+
+If OneDrive is not connected when you choose **Save & check the folder**, the application saves the link and asks you to connect OneDrive, because the folder is looked up with the connected account. Choose the button again after connecting.
+
+To go back to the top folder, clear the field and choose **Save preferences**.
+
+### Which accounts can use a shared folder
+
+The account that matters is the one connected in the application. It has to be able to open the link, and it has to be allowed to add files to the folder.
+
+| The connected account | The folder | What Microsoft's documentation says |
+|---|---|---|
+| any | in that account's own OneDrive | The ordinary permission (**Files.ReadWrite**) is enough. Connecting again is not needed |
+| work or school | someone else's OneDrive, or a SharePoint library, in the same organisation | Microsoft describes **Files.ReadWrite** as access to the signed-in user's own files and **Files.ReadWrite.All** as access to all files the user can access, and gives writing a file shared with the user as its example for the second. The application asks for the second when you connect with a folder set. An organisation may require its administrator to approve that; see [Work or school accounts](#work-or-school-accounts) |
+| personal | a folder another personal account shared | For personal accounts the ordinary permission also covers files shared with the account. The application asks for the wider one all the same when a folder is set |
+| personal, or an account of another organisation | an organisation's OneDrive or SharePoint | Not established. The project found no statement by Microsoft that this works through its programming interface, and has not tried it. The application reports what OneDrive answers |
+
+The wider permission lets the application reach every file the account can reach. The application uses it only for the folder: to ask which folder the link leads to, to add new files to it, to list it, and to ask the drive that holds it for its free space.
+
+A sign-in made *before* a folder was set reaches the account's own files only. The application remembers which kind of sign-in it has. After **Save & check the folder** it tells you when the sign-in is the narrow kind and offers **Connect OneDrive** in the same message; a refused upload says the same.
+
+### What changes in the application
+
+- **Archive.** The card **A copy in the cloud** says that files go to the shared folder set in Settings. Before each upload the application asks OneDrive about the link again, so a link that was withdrawn is reported before a long upload starts.
+- **The link beside an uploaded file** reads **Open the shared folder** followed by the folder's name, and opens the sharing link you pasted: the folder, not the single file. That link opens for everyone the link was made for, whichever Microsoft account their browser is signed in to. The address of a single file in someone else's drive would open only for an account that can already reach that file.
+- **Cloud.** The page lists the shared folder instead of the top folder.
+- **Room.** The application asks the drive that holds the folder how much room is free. If that drive does not say, the upload starts without the check.
+- **Names.** As in the top folder, a file whose name is taken is stored under a different name; nothing is replaced.
+- **Accepting the link.** Asking OneDrive about the link also accepts it for the connected account, as opening the link in a browser would. Microsoft documents this as granting the account durable access to the folder.
+
+### If it does not work
+
+| What the application says | What it means | What to do |
+|---|---|---|
+| **Paste the whole link to the shared folder; it begins with https://.** | The field holds something other than a complete `https` address | Copy the link again with **Copy Link** |
+| **OneDrive did not open the folder behind this link** | The link is incomplete or was withdrawn, or it was not made for the connected account | Check who the link works for; copy it again |
+| **This link does not lead to a folder.** | The link leads to a single file | Share the folder itself |
+| **OneDrive did not accept the file in the shared folder** | The connected account may not add files there, or the sign-in reaches only the account's own files | Give the account the right to edit; if the message says that the sign-in reaches only the account's own files, choose **Connect OneDrive** again |
+| **Need admin approval** on Microsoft's page after you set a folder | Your organisation does not let you approve the wider permission yourself | [Work or school accounts](#work-or-school-accounts) |
+
+### What is stored and sent
+
+- The link is kept in `%LOCALAPPDATA%\Diga\Accounts\folder-OneDrive.bin`, encrypted for your Windows account like the sign-ins. It is not written to the settings file. A sharing link of the kind **Anyone** is itself a key to the folder, which is why it is stored this way.
+- **Disconnect** does not remove the link; clearing the field does, and so does uninstalling.
+- The link is sent to Microsoft Graph (`graph.microsoft.com`) and nowhere else, together with the sign-in, each time the application asks which folder it leads to.
+- Clearing the field does not narrow a sign-in that already has the wider permission. To take it back, remove the application's permission at Microsoft (see [the last section](#what-the-application-stores-and-how-to-take-access-back)) and connect again with the field empty.
 
 ## If OneDrive sign-in fails
 
@@ -246,7 +309,7 @@ What happens during an upload:
 
 After an upload:
 
-- An uploaded file is unticked and gets a line such as **Uploaded to OneDrive at 14:05** on its card. If the service stored the file under another name because the name was taken, the line gives that name. Below it is a link, **Open in OneDrive** or **Open in Google Drive**, when the service returned an address for the file.
+- An uploaded file is unticked and gets a line such as **Uploaded to OneDrive at 14:05** on its card. If the service stored the file under another name because the name was taken, the line gives that name. Below it is a link, **Open in OneDrive** or **Open in Google Drive**, when the service returned an address for the file. With a [shared folder](#shared-folder) set, the link opens that folder instead and is named after it.
 - If you tick such a file and upload it to the same destination again, the application asks **Upload again?** first. **Upload again** stores a second copy; **Do not upload** sends nothing.
 - These lines and the question last until you close the application. The application does not look in the cloud for a file that is already there: a file uploaded in an earlier session and uploaded again is stored twice.
 
@@ -258,7 +321,7 @@ Nothing in the cloud is replaced or deleted by an upload. Uploading does not nee
 
 The **Cloud** page is in the menu on the left, below the five steps and above **Settings**. **See what is in the cloud** on the **Archive** page and in **Settings** opens it too. It is available at any time, not only after an upload.
 
-Choose **List the files**. For OneDrive the page lists everything in the top folder, not only recordings. For Google Drive it lists only the files the application uploaded with your client. The newest items come first. Each line gives the name, the size or the kind of item, and the date of the last change; **Open in browser** opens the item on the service's own site. Of a very long list the application reads only the first part, about a thousand items, and says so.
+Choose **List the files**. For OneDrive the page lists everything in the top folder, or in the [shared folder](#shared-folder) when one is set, not only recordings. For Google Drive it lists only the files the application uploaded with your client. The newest items come first. Each line gives the name, the size or the kind of item, and the date of the last change; **Open in browser** opens the item on the service's own site. Of a very long list the application reads only the first part, about a thousand items, and says so.
 
 Nothing is downloaded and nothing is changed. The list is read only when you ask, and **Refresh the list** reads it again. The application keeps one list at a time: until you close the application, upload to that destination, change its sign-in, or list the files of the other destination. **Manage connections** opens the cloud section of **Settings**.
 
@@ -269,7 +332,7 @@ This section is for readers who want to know exactly what happens, for example b
 - The application never sees your password. It opens your default browser at Microsoft's sign-in service (`login.microsoftonline.com`, the `common` endpoint) or at Google's (`accounts.google.com`), and you sign in there.
 - The answer comes back to an address on your own PC that exists only while the application waits: `http://localhost:<port>` for Microsoft, `http://127.0.0.1:<port>` for Google. The port is chosen at random for each sign-in, between 49152 and 65534. The application listens on the PC's loopback addresses only, which nothing outside the PC reaches.
 - The method is the OAuth 2.0 authorisation code flow with PKCE (method S256) and a random `state` value that the answer has to repeat. For Microsoft no client secret is used. For Google the secret of your own client is sent to Google when the code is exchanged.
-- The permissions asked for are, at Microsoft, the delegated Microsoft Graph permission `Files.ReadWrite` and `offline_access`, and at Google `https://www.googleapis.com/auth/drive.file`. Nothing else is asked for.
+- The permissions asked for are, at Microsoft, the delegated Microsoft Graph permission `Files.ReadWrite` and `offline_access`, and at Google `https://www.googleapis.com/auth/drive.file`. When a [shared folder](#shared-folder) is set, `Files.ReadWrite.All` is asked for in place of `Files.ReadWrite`. Nothing else is asked for. The application notes which of the two Microsoft granted and asks for the same when it renews the sign-in.
 - The application always asks the service to show its account list. At Google it also asks for the permission page at every sign-in, so that Google issues the value the application needs to renew the sign-in later.
 - You have ten minutes to finish in the browser. After that the application stops waiting and says so. **Cancel** at the bottom of the window ends the wait sooner.
 - After the sign-in the application asks the service one question, so that it can name the connection: the kind of drive and its owner's name at Microsoft, the account's e-mail address or name at Google. If no answer comes within 15 seconds, the sign-in stands and the card shows the service without a name.
@@ -279,13 +342,14 @@ This section is for readers who want to know exactly what happens, for example b
 ### On this PC
 
 - **The sign-ins** are in `%LOCALAPPDATA%\Diga\Accounts`, one file for each service and each application or client ID. A file holds Microsoft's or Google's tokens, the ID, the Google client secret, and the name shown on the card. Windows encrypts it for your Windows account, so another Windows user, or someone who copies the files to another PC, cannot read it. A program that runs under your own Windows account could ask Windows to decrypt it, as with anything Windows protects this way. A file the application cannot decrypt, for example in a profile restored on another PC or after a password reset, counts as no saved sign-in: connect again.
+- **The link to a shared folder**, when one is set, is in the same folder in the file `folder-OneDrive.bin`, encrypted in the same way. See [A shared folder for uploads](#shared-folder).
 - **The settings file** `%LOCALAPPDATA%\Diga\settings.json` holds, of the cloud settings, only the chosen destination, your own Microsoft application ID if you entered one, and the Google client ID. It never holds a token or the client secret.
 - **Kept in memory only**, until you close the application: a Google client secret you typed but have not connected with yet, the list on the **Cloud** page, and the lines on **Archive** that say what was uploaded.
 - **The error log** in `%LOCALAPPDATA%\Diga\logs` records a failed sign-in or upload with its technical details, which can include file names and the message the service returned. The application states that the log holds no passwords and no sign-ins. **Settings** has buttons to open its folder and to delete it.
 
 ### Disconnect
 
-**Disconnect** in **Settings** is available when any sign-in for that service is saved on this PC, also when the only one left was made with an ID you used earlier. It removes every sign-in saved on this PC for that service. It also saves the settings on the page; if they cannot be saved, the sign-in is removed all the same and the message says so.
+**Disconnect** in **Settings** is available when any sign-in for that service is saved on this PC, also when the only one left was made with an ID you used earlier. It removes every sign-in saved on this PC for that service. It also saves the settings on the page; if they cannot be saved, the sign-in is removed all the same and the message says so. The link to a shared folder is a setting, not a sign-in, and stays.
 
 - **OneDrive.** The sign-in leaves this PC. Microsoft is not told, so the permission you gave at Microsoft stays until you remove it on your account's page. The message after disconnecting has the link **Open the app permissions of your Microsoft account**, which opens that page.
 - **Google Drive.** The application asks first: **Disconnect Google Drive?** The saved client secret goes with the sign-in, and Google does not show a secret a second time, so keep the secret somewhere or be ready to add a new one to the client (step 6). The application then asks Google to end the sign-in. According to Google's documentation this withdraws what the account granted to the whole Google Cloud project, so the sign-in ends on every PC that uses the same project with this account. The application waits up to ten seconds for Google's answer and then says whether Google confirmed. If Google did not confirm, the sign-in is removed from this PC all the same, and the message has the link **Open the app permissions of your Google account**. Choose **Stay connected** to change nothing.
@@ -302,7 +366,7 @@ Removing the permission there ends the sign-in wherever it is saved. The applica
 
 ### Uninstalling
 
-- Uninstalling the application removes the `Accounts` folder, and with it every saved sign-in and the saved Google client secret. It also removes the default folder for temporary files, the error log and the FFmpeg the application downloaded. The settings file `settings.json` and your saved recordings stay.
+- Uninstalling the application removes the `Accounts` folder, and with it every saved sign-in, the saved Google client secret and the link to a shared folder. It also removes the default folder for temporary files, the error log and the FFmpeg the application downloaded. The settings file `settings.json` and your saved recordings stay.
 - Uninstalling tells neither Microsoft nor Google anything. To have Google end the sign-in, choose **Disconnect** before you uninstall, or remove the permission on Google's page afterwards. The permission at Microsoft is removed on Microsoft's page.
 - Installing a newer version over an older one keeps the saved sign-ins.
 - The portable ZIP has no uninstaller. Delete the folder `%LOCALAPPDATA%\Diga` yourself to remove the sign-ins and the settings.

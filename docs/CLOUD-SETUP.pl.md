@@ -8,7 +8,7 @@ AMG DIGA Archive potrafi przesłać zapisane nagrania na **Twój własny** OneDr
 |---|---|---|---|
 | Przygotowanie przed pierwszym logowaniem | żadne | około 20 minut, jednorazowo | około 15 minut, jednorazowo |
 | Co jest potrzebne | konto Microsoft | konto Microsoft, a przy koncie osobistym bezpłatna rejestracja w Azure (telefon i karta płatnicza do potwierdzenia tożsamości) | konto Google z weryfikacją dwuetapową |
-| Do czego aplikacja ma dostęp | do plików w Twoim OneDrive | do plików w Twoim OneDrive | tylko do plików, które sama przesłała |
+| Do czego aplikacja ma dostęp | do plików w Twoim OneDrive; przy ustawionym [udostępnionym folderze](#shared-folder) do wszystkich plików, do których ma dostęp Twoje konto | tak samo | tylko do plików, które sama przesłała |
 | Jak długo działa logowanie | do rozłączenia albo do długiej przerwy w używaniu | tak samo | 7 dni, chyba że opublikujesz swój projekt Google |
 | Dla kogo | prawie dla każdego | dla organizacji blokujących wbudowany identyfikator i dla osób, które wolą własny | dla osób trzymających archiwum na Dysku Google |
 
@@ -26,6 +26,7 @@ Nazwy elementów w portalach Microsoft i Google podano po angielsku. Oba portale
 - [OneDrive, najprostsza droga](#onedrive-szybko)
 - [OneDrive z własną rejestracją](#onedrive-with-your-own-registration)
 - [Konta służbowe i szkolne](#konta-sluzbowe)
+- [Udostępniony folder na przesyłane pliki](#shared-folder)
 - [Gdy logowanie do OneDrive się nie udaje](#onedrive-bledy)
 - [Dysk Google](#google-drive)
 - [Gdy logowanie do Google się nie udaje](#google-bledy)
@@ -56,6 +57,8 @@ Aplikacja ma wbudowaną rejestrację Microsoft, więc niczego nie trzeba rejestr
 5. Przeglądarka pokaże jeden wiersz tekstu z informacją, że aplikacja otrzymała dane logowania. Zamknij kartę przeglądarki i wróć do aplikacji. Karta w aplikacji pokazuje teraz **Połączono · OneDrive (osobisty)** albo **Połączono · OneDrive (służbowy lub szkolny)** i nazwę właściciela dysku.
 
 Aplikacja używa tej zgody do dodawania nowych plików do głównego folderu Twojego OneDrive, do wyświetlania zawartości tego folderu oraz do zapytania o rodzaj dysku, nazwę jego właściciela i ilość wolnego miejsca. Nigdy nie zmienia ani nie usuwa plików, które już tam są: jeśli plik o takiej nazwie już istnieje, OneDrive zapisuje nowy pod zmienioną nazwą.
+
+Pliki mogą trafiać do jednego udostępnionego folderu zamiast do folderu głównego; zob. [Udostępniony folder na przesyłane pliki](#shared-folder). Gdy taki folder jest ustawiony, strona Microsoft w kroku 4 pyta o wszystkie pliki, do których masz dostęp, a nie tylko o własne.
 
 Aby później użyć innego konta Microsoft, ponownie wybierz **Połącz z OneDrive** i wskaż inne konto na stronie Microsoft. Nie trzeba się wcześniej rozłączać.
 
@@ -95,7 +98,7 @@ Bezpłatne konto jest oferowane raz, osobom, które wcześniej nie korzystały z
     - Wpisz dokładnie tak: `http`, nie `https`; bez portu, bez ukośnika, bez ścieżki. Nie używaj tu `127.0.0.1`, choć jedna ze stron Microsoft to zaleca: aplikacja wysyła `localhost`.
     - Nie dodawaj adresu w sekcjach **Web** ani **Single-page application**.
 12. Opcję **Allow public client flows** zostaw wyłączoną (w nowym układzie jest na karcie **Settings** strony Authentication, w starym w sekcji **Advanced settings**). Niczego nie twórz w **Certificates & secrets**: dla OneDrive aplikacja nie używa klucza tajnego.
-13. Otwórz **API permissions → Add a permission → Microsoft Graph → Delegated permissions**, zaznacz **Files.ReadWrite** oraz **offline_access** i wybierz **Add permissions**. Wpis **User.Read**, który dodał Microsoft, zostaw. Przy koncie osobistym ten krok jest opcjonalny, bo aplikacja i tak prosi o oba uprawnienia podczas logowania; ma znaczenie, gdy aplikację musi zatwierdzić administrator organizacji.
+13. Otwórz **API permissions → Add a permission → Microsoft Graph → Delegated permissions**, zaznacz **Files.ReadWrite** oraz **offline_access** i wybierz **Add permissions**. Jeśli pliki mają trafiać do [udostępnionego folderu](#shared-folder), zaznacz też **Files.ReadWrite.All**. Wpis **User.Read**, który dodał Microsoft, zostaw. Przy koncie osobistym ten krok jest opcjonalny, bo aplikacja i tak prosi o potrzebne uprawnienia podczas logowania; ma znaczenie, gdy aplikację musi zatwierdzić administrator organizacji.
 14. Odczekaj około pięciu minut. Zmiany w Microsoft nie działają natychmiast.
 
 ### Część C: połączenie w aplikacji
@@ -123,11 +126,72 @@ Ta część opiera się na dokumentacji Microsoft; projekt nie sprawdzał konta 
 
 Wiele organizacji nie pozwala użytkownikom samodzielnie zatwierdzać aplikacji albo pozwala tylko na aplikacje zweryfikowanych wydawców. Microsoft uznaje też za ryzykowną niedawno zarejestrowaną aplikację, która prosi o więcej niż samo logowanie, nie ma zweryfikowanego wydawcy i pochodzi z innej organizacji. Wtedy zamiast strony ze zgodą pojawia się **Need admin approval** (albo błąd taki jak `AADSTS90094`, `AADSTS90093` lub `AADSTS900941`). Co można zrobić:
 
-- **Poproś administratora** o zatwierdzenie aplikacji. Może to zrobić w centrum administracyjnym Entra w sekcji **Enterprise apps** albo za pomocą adresu zgody administratora; zob. [Grant tenant-wide admin consent](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/grant-admin-consent) w dokumentacji Microsoft. Podaj mu identyfikator aplikacji. Wbudowany identyfikator tej wersji to `bfd21bf0-32a9-4520-8bbb-d525e3d34aea`; aplikacja pokazuje go na stronie **Ustawienia**, w sekcji **Własna rejestracja aplikacji w Microsoft**. Uprawnienia to delegowane uprawnienia Microsoft Graph **Files.ReadWrite** i **offline_access**.
+- **Poproś administratora** o zatwierdzenie aplikacji. Może to zrobić w centrum administracyjnym Entra w sekcji **Enterprise apps** albo za pomocą adresu zgody administratora; zob. [Grant tenant-wide admin consent](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/grant-admin-consent) w dokumentacji Microsoft. Podaj mu identyfikator aplikacji. Wbudowany identyfikator tej wersji to `bfd21bf0-32a9-4520-8bbb-d525e3d34aea`; aplikacja pokazuje go na stronie **Ustawienia**, w sekcji **Własna rejestracja aplikacji w Microsoft**. Uprawnienia to delegowane uprawnienia Microsoft Graph **Files.ReadWrite** i **offline_access**, a przy ustawionym [udostępnionym folderze](#shared-folder) **Files.ReadWrite.All** w miejsce pierwszego.
 - **Zarejestruj własną aplikację w katalogu swojej organizacji** (część B powyżej, o ile organizacja pozwala użytkownikom rejestrować aplikacje). Zasady dotyczące niezweryfikowanych wydawców nie obejmują aplikacji zarejestrowanych we własnej organizacji.
 - Jeśli organizacja stosuje obieg zatwierdzania, zobaczysz **Approval required** z polem tekstowym: wyślij prośbę i poczekaj na wiadomość e-mail.
 
 Błędy wspominające o dostępie warunkowym lub logowaniu wieloskładnikowym (`AADSTS53003`, `AADSTS50076`) wynikają z zasad Twojej organizacji; zmienić je może tylko jej dział IT.
+
+<a name="shared-folder"></a>
+## Udostępniony folder na przesyłane pliki
+
+Bez dodatkowych ustawień pliki trafiają do głównego folderu OneDrive połączonego konta. Można je zamiast tego kierować do jednego udostępnionego folderu: folderu w czyimś OneDrive albo w bibliotece dokumentów SharePoint, do którego ma dostęp kilka osób. Każda z nich przesyła wtedy pliki ze swojego konta Microsoft, a wszystkie nagrania trafiają w to samo miejsce. Dysk Google nie ma takiego ustawienia.
+
+**Na ile to zostało sprawdzone.** Udostępniony folder był dotąd uruchamiany wyłącznie w testach automatycznych projektu, z symulowanymi serwerami Microsoft. Nikt jeszcze nie zgłosił użycia go z prawdziwym folderem OneDrive lub SharePoint. To, co ta część mówi o stronie Microsoft, opiera się na dokumentacji Microsoft w brzmieniu z 8 października 2026 r.; to, co mówi o aplikacji, pochodzi z kodu aplikacji.
+
+### Konfiguracja
+
+1. **Wybierz folder.** Na stronie OneDrive albo w bibliotece dokumentów SharePoint utwórz lub wskaż folder, do którego mają trafiać nagrania.
+2. **Udostępnij go i skopiuj link.** Zaznacz folder i wybierz **Share**. Ustaw, dla kogo link działa (Microsoft daje do wyboru **Anyone**, **People in** Twoja organizacja **with the link**, **People with existing access** oraz **Specific people**; organizacja może część z nich wyłączyć), i wybierz **Copy Link**. Każdy, kto ma przesyłać pliki, potrzebuje prawa *edycji*, bo dodanie pliku jest edycją. Osobom, które mają tylko oglądać nagrania, wystarczy prawo wyświetlania.
+3. **Wklej link.** W aplikacji otwórz **Ustawienia** i przewiń do karty **Microsoft OneDrive**. Wklej link w polu **Folder na przesyłane pliki (opcjonalnie)**. Musi to być cały adres, zaczynający się od `https://`.
+4. **Połącz.** Wybierz **Połącz z OneDrive**, także wtedy, gdy OneDrive był już połączony: gdy folder jest ustawiony, aplikacja prosi Microsoft o dostęp do plików udostępnionych Twojemu kontu, a nie tylko do własnych, i strona Microsoft o tym informuje. O tym, kiedy ma to znaczenie, mówi część [Które konta mogą korzystać z udostępnionego folderu](#ktore-konta).
+5. **Sprawdź.** Wybierz **Zapisz i sprawdź folder**. Aplikacja pyta OneDrive, jako połączone konto, do jakiego folderu prowadzi link, i odpowiada **Folder znaleziony** wraz z nazwą folderu. Następnie prześlij jeden mały plik ze strony **Archiwum**: to, czy konto może dodawać pliki do folderu, okazuje się dopiero przy pierwszym przesyłaniu.
+
+Jeśli w chwili wybrania **Zapisz i sprawdź folder** OneDrive nie jest połączony, aplikacja zapisuje link i prosi o połączenie OneDrive, bo folder jest sprawdzany z użyciem połączonego konta. Po połączeniu wybierz przycisk ponownie.
+
+Aby wrócić do folderu głównego, wyczyść pole i wybierz **Zapisz preferencje**.
+
+<a name="ktore-konta"></a>
+### Które konta mogą korzystać z udostępnionego folderu
+
+Liczy się konto połączone z aplikacją. Musi ono móc otworzyć link i mieć prawo dodawania plików do folderu.
+
+| Połączone konto | Folder | Co mówi dokumentacja Microsoft |
+|---|---|---|
+| dowolne | we własnym OneDrive tego konta | Wystarcza zwykłe uprawnienie (**Files.ReadWrite**). Ponowne łączenie nie jest potrzebne |
+| służbowe lub szkolne | czyjś OneDrive albo biblioteka SharePoint w tej samej organizacji | Microsoft opisuje **Files.ReadWrite** jako dostęp do własnych plików zalogowanego użytkownika, a **Files.ReadWrite.All** jako dostęp do wszystkich plików, do których użytkownik ma dostęp, i jako przykład użycia drugiego podaje zapis pliku udostępnionego użytkownikowi. Aplikacja prosi o to drugie, gdy łączysz się przy ustawionym folderze. Organizacja może wymagać, aby zatwierdził to administrator; zob. [Konta służbowe i szkolne](#konta-sluzbowe) |
+| osobiste | folder udostępniony przez inne konto osobiste | W przypadku kont osobistych zwykłe uprawnienie obejmuje także pliki udostępnione kontu. Gdy folder jest ustawiony, aplikacja i tak prosi o szersze |
+| osobiste albo konto innej organizacji | OneDrive lub SharePoint organizacji | Nie ustalono. Projekt nie znalazł stwierdzenia Microsoft, że działa to przez jego interfejs programistyczny, i tego nie sprawdzał. Aplikacja przekazuje to, co odpowie OneDrive |
+
+Szersze uprawnienie pozwala aplikacji sięgać do każdego pliku, do którego ma dostęp konto. Aplikacja używa go wyłącznie do folderu: pyta, do jakiego folderu prowadzi link, dodaje do niego nowe pliki, wyświetla jego zawartość i pyta dysk, na którym folder leży, o wolne miejsce.
+
+Logowanie wykonane, *zanim* ustawiono folder, obejmuje tylko własne pliki konta. Aplikacja pamięta, jakiego rodzaju logowanie ma. Po wybraniu **Zapisz i sprawdź folder** informuje, gdy logowanie jest tego węższego rodzaju, i w tym samym komunikacie daje przycisk **Połącz z OneDrive**; to samo mówi komunikat o odrzuconym przesyłaniu.
+
+### Co się zmienia w aplikacji
+
+- **Archiwum.** Karta **Kopia w chmurze** informuje, że pliki trafiają do udostępnionego folderu ustawionego w Ustawieniach. Przed każdym przesyłaniem aplikacja ponownie pyta OneDrive o link, więc o wycofanym linku dowiesz się, zanim zacznie się długie przesyłanie.
+- **Odnośnik przy przesłanym pliku** brzmi **Otwórz udostępniony folder** z nazwą folderu i otwiera wklejony przez Ciebie link udostępniania: folder, a nie pojedynczy plik. Ten link otwiera się każdemu, dla kogo został utworzony, niezależnie od tego, na jakie konto Microsoft zalogowana jest przeglądarka. Adres pojedynczego pliku na czyimś dysku otworzyłby się tylko kontu, które już ma dostęp do tego pliku.
+- **Chmura.** Strona pokazuje udostępniony folder zamiast folderu głównego.
+- **Miejsce.** Aplikacja pyta dysk, na którym leży folder, ile jest wolnego miejsca. Jeśli dysk tego nie podaje, przesyłanie zaczyna się bez tego sprawdzenia.
+- **Nazwy.** Tak jak w folderze głównym, plik o zajętej nazwie zostaje zapisany pod zmienioną nazwą; nic nie jest zastępowane.
+- **Przyjęcie linku.** Pytanie OneDrive o link jest jednocześnie przyjęciem go w imieniu połączonego konta, tak jak otwarcie linku w przeglądarce. Według dokumentacji Microsoft daje to kontu trwały dostęp do folderu.
+
+### Gdy to nie działa
+
+| Co mówi aplikacja | Co to znaczy | Co zrobić |
+|---|---|---|
+| **Wklej cały link do udostępnionego folderu; zaczyna się od https://.** | W polu jest coś innego niż pełny adres `https` | Skopiuj link ponownie przyciskiem **Copy Link** |
+| **Usługa OneDrive nie otworzyła folderu, do którego prowadzi ten link** | Link jest niepełny albo został wycofany, albo nie został utworzony dla połączonego konta | Sprawdź, dla kogo link działa; skopiuj go ponownie |
+| **Ten link nie prowadzi do folderu.** | Link prowadzi do pojedynczego pliku | Udostępnij sam folder |
+| **Usługa OneDrive nie przyjęła pliku w udostępnionym folderze** | Połączone konto nie może tam dodawać plików albo logowanie obejmuje tylko własne pliki konta | Nadaj kontu prawo edycji; jeśli komunikat mówi, że logowanie obejmuje tylko własne pliki konta, ponownie wybierz **Połącz z OneDrive** |
+| **Need admin approval** na stronie Microsoft po ustawieniu folderu | Organizacja nie pozwala Ci samodzielnie zatwierdzić szerszego uprawnienia | [Konta służbowe i szkolne](#konta-sluzbowe) |
+
+### Co jest przechowywane i wysyłane
+
+- Link jest przechowywany w pliku `%LOCALAPPDATA%\Diga\Accounts\folder-OneDrive.bin`, zaszyfrowany dla Twojego konta Windows tak jak logowania. Nie trafia do pliku ustawień. Link udostępniania rodzaju **Anyone** sam jest kluczem do folderu i dlatego jest przechowywany w ten sposób.
+- Przycisk **Rozłącz** nie usuwa linku; usuwa go wyczyszczenie pola, a także odinstalowanie aplikacji.
+- Link jest wysyłany do Microsoft Graph (`graph.microsoft.com`) i nigdzie indziej, razem z logowaniem, za każdym razem, gdy aplikacja pyta, do jakiego folderu prowadzi.
+- Wyczyszczenie pola nie zawęża logowania, które ma już szersze uprawnienie. Aby je cofnąć, usuń zgodę aplikacji po stronie Microsoft (zob. [ostatnią część](#dane)) i połącz się ponownie przy pustym polu.
 
 <a name="onedrive-bledy"></a>
 ## Gdy logowanie do OneDrive się nie udaje
@@ -256,7 +320,7 @@ Co dzieje się podczas przesyłania:
 
 Po przesłaniu:
 
-- Przesłany plik zostaje odznaczony, a na jego karcie pojawia się wiersz taki jak **Przesłano do usługi OneDrive o 14:05**. Jeśli usługa zapisała plik pod inną nazwą, bo nazwa była zajęta, wiersz podaje tę nazwę. Pod nim jest odnośnik **Otwórz w usłudze OneDrive** albo **Otwórz w usłudze Dysk Google**, o ile usługa zwróciła adres pliku.
+- Przesłany plik zostaje odznaczony, a na jego karcie pojawia się wiersz taki jak **Przesłano do usługi OneDrive o 14:05**. Jeśli usługa zapisała plik pod inną nazwą, bo nazwa była zajęta, wiersz podaje tę nazwę. Pod nim jest odnośnik **Otwórz w usłudze OneDrive** albo **Otwórz w usłudze Dysk Google**, o ile usługa zwróciła adres pliku. Przy ustawionym [udostępnionym folderze](#shared-folder) odnośnik otwiera ten folder i nosi jego nazwę.
 - Jeśli zaznaczysz taki plik i zechcesz przesłać go ponownie w to samo miejsce, aplikacja najpierw zapyta **Przesłać ponownie?** Przycisk **Prześlij ponownie** zapisuje w chmurze drugą kopię; **Nie przesyłaj** niczego nie wysyła.
 - Te wiersze i to pytanie działają do zamknięcia aplikacji. Aplikacja nie sprawdza w chmurze, czy plik już tam jest: plik przesłany w poprzedniej sesji i przesłany ponownie zostanie zapisany dwa razy.
 
@@ -268,7 +332,7 @@ Przesyłanie niczego w chmurze nie zastępuje ani nie usuwa. Do przesyłania nie
 
 Strona **Chmura** jest w menu po lewej, pod pięcioma krokami i nad pozycją **Ustawienia**. Otwiera ją też przycisk **Zobacz, co jest w chmurze** na stronach **Archiwum** i **Ustawienia**. Jest dostępna w każdej chwili, nie tylko po przesłaniu plików.
 
-Wybierz **Pokaż pliki**. Dla OneDrive strona pokazuje całą zawartość głównego folderu, nie tylko nagrania. Dla Dysku Google pokazuje tylko pliki przesłane przez aplikację za pomocą Twojego klienta. Najnowsze pozycje są na górze. Każdy wiersz podaje nazwę, rozmiar albo rodzaj pozycji oraz datę ostatniej zmiany; odnośnik **Otwórz w przeglądarce** otwiera pozycję na stronie usługi. Z bardzo długiej listy aplikacja odczytuje tylko początek, około tysiąca pozycji, i o tym informuje.
+Wybierz **Pokaż pliki**. Dla OneDrive strona pokazuje całą zawartość głównego folderu albo [udostępnionego folderu](#shared-folder), jeśli jest ustawiony, nie tylko nagrania. Dla Dysku Google pokazuje tylko pliki przesłane przez aplikację za pomocą Twojego klienta. Najnowsze pozycje są na górze. Każdy wiersz podaje nazwę, rozmiar albo rodzaj pozycji oraz datę ostatniej zmiany; odnośnik **Otwórz w przeglądarce** otwiera pozycję na stronie usługi. Z bardzo długiej listy aplikacja odczytuje tylko początek, około tysiąca pozycji, i o tym informuje.
 
 Nic nie jest pobierane ani zmieniane. Lista jest odczytywana tylko na Twoje życzenie, a przycisk **Odśwież listę** odczytuje ją ponownie. Aplikacja przechowuje jedną listę naraz: do zamknięcia aplikacji albo do chwili, gdy prześlesz coś w to miejsce, zmienisz jego logowanie lub odczytasz listę plików drugiego miejsca docelowego. Przycisk **Zarządzaj połączeniami** otwiera część strony **Ustawienia** poświęconą chmurze.
 
@@ -280,7 +344,7 @@ Ta część jest dla osób, które chcą dokładnie wiedzieć, co się dzieje, n
 - Aplikacja nigdy nie widzi Twojego hasła. Otwiera domyślną przeglądarkę na stronie usługi logowania Microsoft (`login.microsoftonline.com`, punkt końcowy `common`) albo Google (`accounts.google.com`) i to tam się logujesz.
 - Odpowiedź wraca pod adres na Twoim komputerze, który istnieje tylko wtedy, gdy aplikacja czeka: `http://localhost:<port>` dla Microsoft, `http://127.0.0.1:<port>` dla Google. Port jest losowany przy każdym logowaniu z zakresu od 49152 do 65534. Aplikacja nasłuchuje wyłącznie na adresach pętli zwrotnej komputera, do których nic spoza niego nie ma dostępu.
 - Używana metoda to przepływ kodu autoryzacji OAuth 2.0 z PKCE (metoda S256) i losową wartością `state`, którą odpowiedź musi powtórzyć. Dla Microsoft nie jest używany żaden klucz tajny. Dla Google klucz tajny Twojego klienta jest wysyłany do Google przy wymianie kodu.
-- Aplikacja prosi w Microsoft o delegowane uprawnienie Microsoft Graph `Files.ReadWrite` oraz o `offline_access`, a w Google o `https://www.googleapis.com/auth/drive.file`. O nic więcej nie prosi.
+- Aplikacja prosi w Microsoft o delegowane uprawnienie Microsoft Graph `Files.ReadWrite` oraz o `offline_access`, a w Google o `https://www.googleapis.com/auth/drive.file`. Gdy ustawiony jest [udostępniony folder](#shared-folder), w miejsce `Files.ReadWrite` prosi o `Files.ReadWrite.All`. O nic więcej nie prosi. Aplikacja zapamiętuje, które z tych dwóch uprawnień przyznał Microsoft, i o to samo prosi przy odnawianiu logowania.
 - Aplikacja zawsze prosi usługę o pokazanie listy kont. W Google prosi też o stronę ze zgodą przy każdym logowaniu, aby Google wydał wartość potrzebną później do odnowienia logowania.
 - Na dokończenie logowania w przeglądarce masz dziesięć minut. Potem aplikacja przestaje czekać i o tym informuje. Przycisk **Anuluj** na dole okna kończy czekanie wcześniej.
 - Po zalogowaniu aplikacja zadaje usłudze jedno pytanie, żeby móc nazwać połączenie: w Microsoft o rodzaj dysku i nazwę jego właściciela, w Google o adres e-mail albo nazwę konta. Jeśli odpowiedź nie nadejdzie w ciągu 15 sekund, logowanie pozostaje ważne, a karta pokazuje usługę bez nazwy.
@@ -291,13 +355,14 @@ Ta część jest dla osób, które chcą dokładnie wiedzieć, co się dzieje, n
 ### Na tym komputerze
 
 - **Logowania** są w folderze `%LOCALAPPDATA%\Diga\Accounts`, po jednym pliku dla każdej usługi i każdego identyfikatora aplikacji lub klienta. Plik zawiera tokeny Microsoft lub Google, identyfikator, klucz tajny klienta Google oraz nazwę pokazywaną na karcie. Windows szyfruje go dla Twojego konta Windows, więc inny użytkownik Windows ani osoba, która skopiuje pliki na inny komputer, ich nie odczyta. Program działający na Twoim własnym koncie Windows mógłby poprosić system o odszyfrowanie pliku, jak w przypadku wszystkiego, co Windows chroni w ten sposób. Plik, którego aplikacja nie potrafi odszyfrować, na przykład w profilu przywróconym na innym komputerze albo po zresetowaniu hasła, jest traktowany jak brak zapisanego logowania: połącz się ponownie.
+- **Link do udostępnionego folderu**, jeśli jest ustawiony, znajduje się w tym samym folderze, w pliku `folder-OneDrive.bin`, zaszyfrowanym w ten sam sposób. Zob. [Udostępniony folder na przesyłane pliki](#shared-folder).
 - **Plik ustawień** `%LOCALAPPDATA%\Diga\settings.json` zawiera z ustawień chmury tylko wybrane miejsce docelowe, własny identyfikator aplikacji Microsoft, jeśli go wpisano, oraz identyfikator klienta Google. Nigdy nie zawiera tokenu ani klucza tajnego.
 - **Tylko w pamięci**, do zamknięcia aplikacji, pozostają: klucz tajny klienta Google wpisany, ale jeszcze nieużyty do udanego połączenia, lista ze strony **Chmura** oraz wiersze na stronie **Archiwum** informujące o przesłanych plikach.
 - **Dziennik błędów** w folderze `%LOCALAPPDATA%\Diga\logs` zapisuje nieudane logowanie lub przesyłanie wraz ze szczegółami technicznymi, wśród których mogą być nazwy plików i komunikat zwrócony przez usługę. Aplikacja podaje, że w dzienniku nie ma haseł ani danych logowania. Na stronie **Ustawienia** są przyciski do otwarcia jego folderu i do usunięcia dziennika.
 
 ### Rozłączanie
 
-Przycisk **Rozłącz** na stronie **Ustawienia** jest dostępny, gdy na tym komputerze jest zapisane jakiekolwiek logowanie do danej usługi, także wykonane z identyfikatorem używanym wcześniej. Usuwa wszystkie logowania do danej usługi zapisane na tym komputerze. Zapisuje też ustawienia z tej strony; jeśli nie da się ich zapisać, logowanie i tak zostaje usunięte, a komunikat o tym informuje.
+Przycisk **Rozłącz** na stronie **Ustawienia** jest dostępny, gdy na tym komputerze jest zapisane jakiekolwiek logowanie do danej usługi, także wykonane z identyfikatorem używanym wcześniej. Usuwa wszystkie logowania do danej usługi zapisane na tym komputerze. Zapisuje też ustawienia z tej strony; jeśli nie da się ich zapisać, logowanie i tak zostaje usunięte, a komunikat o tym informuje. Link do udostępnionego folderu jest ustawieniem, a nie logowaniem, i zostaje.
 
 - **OneDrive.** Logowanie znika z tego komputera. Microsoft nie jest o tym informowany, więc zgoda udzielona w Microsoft pozostaje, dopóki nie usuniesz jej na stronie swojego konta. Komunikat po rozłączeniu zawiera odnośnik **Otwórz uprawnienia aplikacji na koncie Microsoft**, który otwiera tę stronę.
 - **Dysk Google.** Aplikacja najpierw pyta: **Rozłączyć Dysk Google?** Razem z logowaniem znika zapisany klucz tajny klienta, a Google nie pokazuje klucza po raz drugi, więc zachowaj klucz albo licz się z dodaniem nowego do klienta (krok 6). Następnie aplikacja prosi Google o zakończenie logowania. Według dokumentacji Google cofa to wszystko, na co konto zezwoliło całemu projektowi Google Cloud, więc logowanie kończy się na każdym komputerze, który używa tego samego projektu z tym kontem. Aplikacja czeka na odpowiedź Google najwyżej dziesięć sekund, a potem informuje, czy Google potwierdził zakończenie. Jeśli nie potwierdził, logowanie i tak zostaje usunięte z tego komputera, a komunikat zawiera odnośnik **Otwórz uprawnienia aplikacji na koncie Google**. Aby niczego nie zmieniać, wybierz **Pozostań połączony**.
@@ -314,7 +379,7 @@ Usunięcie zgody na tych stronach kończy logowanie wszędzie, gdzie jest zapisa
 
 ### Odinstalowanie
 
-- Odinstalowanie aplikacji usuwa folder `Accounts`, a z nim wszystkie zapisane logowania i zapisany klucz tajny klienta Google. Usuwa też domyślny folder plików tymczasowych, dziennik błędów i program FFmpeg pobrany przez aplikację. Plik ustawień `settings.json` i zapisane nagrania zostają.
+- Odinstalowanie aplikacji usuwa folder `Accounts`, a z nim wszystkie zapisane logowania, zapisany klucz tajny klienta Google i link do udostępnionego folderu. Usuwa też domyślny folder plików tymczasowych, dziennik błędów i program FFmpeg pobrany przez aplikację. Plik ustawień `settings.json` i zapisane nagrania zostają.
 - Odinstalowanie o niczym nie informuje ani firmy Microsoft, ani Google. Aby Google zakończył logowanie, wybierz **Rozłącz** przed odinstalowaniem albo usuń potem zgodę na stronie Google. Zgodę udzieloną w Microsoft usuwa się na stronie Microsoft.
 - Instalacja nowszej wersji na starszą zachowuje zapisane logowania.
 - Wersja przenośna (plik ZIP) nie ma dezinstalatora. Aby usunąć logowania i ustawienia, skasuj samodzielnie folder `%LOCALAPPDATA%\Diga`.

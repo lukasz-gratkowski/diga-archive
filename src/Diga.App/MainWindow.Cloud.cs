@@ -23,6 +23,26 @@ public sealed partial class MainWindow
     private DateTimeOffset _cloudListedAt;
     // Typed on the Settings page and kept until a sign-in has stored it: Google shows a client secret only once.
     private string _googleSecretDraft = "";
+    // The folder OneDrive uploads go to instead of the top folder, when one is set: its sharing link as saved, what is typed in
+    // Settings and not saved yet, and the folder's name as OneDrive gave it when the link was last looked up.
+    private readonly CloudFolderLinkStore _folderLinks = new();
+    private string _oneDriveFolderLink = "";
+    private string? _oneDriveFolderDraft;
+    private string? _oneDriveFolderName;
+
+    private bool HasUploadFolder(CloudProvider provider) => provider == CloudProvider.OneDrive && _oneDriveFolderLink.Length != 0;
+
+    /// <summary>
+    /// The folder for uploads as OneDrive describes it now, or null for the top folder. It is asked before every upload and
+    /// every listing: a link can be withdrawn or the folder moved at any time, and one question says so before a long upload starts.
+    /// </summary>
+    private async Task<CloudFolder?> ResolveUploadFolderAsync(CloudAccount account, CancellationToken ct)
+    {
+        if (!HasUploadFolder(account.Provider) || !CloudBrowseService.TryParseFolderLink(_oneDriveFolderLink, out var link)) return null;
+        var folder = await new CloudBrowseService().ResolveFolderAsync(account, link!, ct);
+        _oneDriveFolderName = folder.Name;
+        return folder;
+    }
 
     // Google calls its service "Dysk Google" in Polish; Microsoft keeps "OneDrive" everywhere.
     private static string ProviderName(CloudProvider provider) => provider == CloudProvider.GoogleDrive ? L.T("Core.Cloud.Account.Google") : "OneDrive";
@@ -48,6 +68,9 @@ public sealed partial class MainWindow
     private async Task LoadCloudAccountsAsync(CancellationToken ct)
     {
         _uploadProvider = _settings.UploadProvider;
+        // A link that cannot be read (another Windows account's file) counts as none: uploads then go to the top folder.
+        try { _oneDriveFolderLink = await _folderLinks.LoadAsync(CloudProvider.OneDrive, ct) ?? ""; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { App.LogException("Reading the folder for uploads", ex); }
         foreach (var provider in CloudProviders)
         {
             _accountNames.Remove(provider);
@@ -100,7 +123,7 @@ public sealed partial class MainWindow
         cloud.Children.Add(Body(L.T("Journey.Cloud.Help")));
         cloud.Children.Add(ProviderSelector());
         cloud.Children.Add(Muted(CloudConnectionLabel(provider), 12));
-        cloud.Children.Add(Muted(L.T(provider == CloudProvider.GoogleDrive ? "Journey.Cloud.WhereGoogle" : "Journey.Cloud.WhereOneDrive"), 12));
+        cloud.Children.Add(Muted(L.T(provider == CloudProvider.GoogleDrive ? "Journey.Cloud.WhereGoogle" : HasUploadFolder(provider) ? "Journey.Cloud.WhereOneDriveFolder" : "Journey.Cloud.WhereOneDrive"), 12));
         _uploadSelectionText = Muted("", 12);
         cloud.Children.Add(_uploadSelectionText);
         _uploadSelectedButton = ActionButton(L.T("Journey.Cloud.UploadTo", ProviderName(provider)), UploadSelectedAsync, true);
@@ -203,7 +226,9 @@ public sealed partial class MainWindow
             if (account is null) { ForgetCloudAccount(provider); throw new InvalidOperationException(L.T("Journey.Cloud.AccountRequired", name)); }
             try
             {
-                await CheckCloudSpaceAsync(account, selected, ct);
+                if (HasUploadFolder(provider)) SetProgress(null, L.T("Journey.Cloud.FolderLookup"));
+                var folder = await ResolveUploadFolderAsync(account, ct);
+                await CheckCloudSpaceAsync(account, folder, selected, ct);
                 var service = new CloudUploadService();
                 var uploaded = 0;
                 var failures = new List<string>();
@@ -221,10 +246,10 @@ public sealed partial class MainWindow
                             : L.T("Journey.Cloud.Progress", number, selected.Length, fileName, FormatBytes(p.BytesUploaded), FormatBytes(p.TotalBytes)) + PaceText(p.BytesUploaded, p.TotalBytes, clock.Elapsed)));
                         try
                         {
-                            var result = await service.UploadAsync(new CloudUploadRequest(account, file.Path), progress, ct);
+                            var result = await service.UploadAsync(new CloudUploadRequest(account, file.Path, folder), progress, ct);
                             uploaded++;
                             _selectedExports.Remove(file.Path);
-                            RecordCloudCopy(file.Path, provider, result);
+                            RecordCloudCopy(file.Path, provider, result, folder);
                             // What was listed before no longer shows everything that is there.
                             if (_cloudListingProvider == provider) _cloudListing = null;
                         }
@@ -267,19 +292,20 @@ public sealed partial class MainWindow
 
     private string? _pendingCloudMessage;
 
-    private void RecordCloudCopy(string path, CloudProvider provider, CloudUploadResult result)
+    private void RecordCloudCopy(string path, CloudProvider provider, CloudUploadResult result, CloudFolder? folder)
     {
         var index = _exports.FindIndex(e => string.Equals(e.Path, path, StringComparison.OrdinalIgnoreCase));
         if (index < 0) return;
-        var link = Uri.TryCreate(result.WebUrl, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps ? uri : null;
-        _exports[index] = _exports[index] with { CloudCopies = [.. _exports[index].CloudCopies, new CloudCopy(provider, result.Name, link, DateTimeOffset.Now)] };
+        // In a shared folder the link is the folder's sharing link, which opens for everyone the folder is shared with.
+        var link = folder?.Link ?? (Uri.TryCreate(result.WebUrl, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps ? uri : null);
+        _exports[index] = _exports[index] with { CloudCopies = [.. _exports[index].CloudCopies, new CloudCopy(provider, result.Name, link, DateTimeOffset.Now, folder?.Name)] };
     }
 
     /// <summary>Stops before a long upload that cannot fit. A drive that does not say how much room it has is not an obstacle.</summary>
-    private async Task CheckCloudSpaceAsync(CloudAccount account, IReadOnlyCollection<ExportedFile> files, CancellationToken ct)
+    private async Task CheckCloudSpaceAsync(CloudAccount account, CloudFolder? folder, IReadOnlyCollection<ExportedFile> files, CancellationToken ct)
     {
         long? free;
-        try { free = await new CloudBrowseService().GetFreeSpaceAsync(account, ct); }
+        try { free = await new CloudBrowseService().GetFreeSpaceAsync(account, folder, ct); }
         catch (CloudSignInExpiredException) { throw; }
         catch (Exception ex) when (!ct.IsCancellationRequested) { App.LogException("Asking for free cloud space", ex); return; }
         var needed = files.Sum(FileLength);
@@ -298,7 +324,8 @@ public sealed partial class MainWindow
         source.Children.Add(ProviderSelector());
         source.Children.Add(Muted(L.T("Journey.CloudView.SelectorNote"), 12));
         source.Children.Add(Body(CloudConnectionLabel(provider)));
-        source.Children.Add(Muted(L.T(google ? "Journey.CloudView.GoogleScope" : "Journey.CloudView.OneDriveScope"), 12));
+        var inFolder = HasUploadFolder(provider);
+        source.Children.Add(Muted(L.T(google ? "Journey.CloudView.GoogleScope" : inFolder ? "Journey.CloudView.OneDriveFolderScope" : "Journey.CloudView.OneDriveScope"), 12));
         source.Children.Add(ActionRow(
             ActionButton(L.T(listing is null ? "Journey.CloudView.List" : "Journey.CloudView.Refresh"), ListCloudAsync, true),
             ActionButton(L.T("Journey.Cloud.Manage"), OpenCloudSettingsAsync)));
@@ -308,13 +335,13 @@ public sealed partial class MainWindow
         if (listing is null && !connected) return;
 
         var files = new StackPanel { Spacing = 12 };
-        files.Children.Add(SectionTitle(ProviderName(provider), Symbol.Library));
+        files.Children.Add(SectionTitle(inFolder && listing is not null && _oneDriveFolderName is { } folderName ? ProviderName(provider) + " · " + folderName : ProviderName(provider), Symbol.Library));
         if (listing is null) files.Children.Add(Body(L.T("Journey.CloudView.NotListed")));
         else
         {
             files.Children.Add(Muted(L.Plural("Journey.CloudView.Summary", listing.Items.Count, _cloudListedAt.ToLocalTime().ToString("t")), 12));
             if (listing.Truncated) files.Children.Add(new InfoBar { IsOpen = true, IsClosable = false, Severity = InfoBarSeverity.Informational, Message = L.T("Journey.CloudView.Truncated", listing.Items.Count) });
-            if (listing.Items.Count == 0) files.Children.Add(Body(L.T(google ? "Journey.CloudView.EmptyGoogle" : "Journey.CloudView.Empty")));
+            if (listing.Items.Count == 0) files.Children.Add(Body(L.T(google ? "Journey.CloudView.EmptyGoogle" : inFolder ? "Journey.CloudView.EmptyFolder" : "Journey.CloudView.Empty")));
             else
             {
                 var list = new ListView { SelectionMode = ListViewSelectionMode.None, IsItemClickEnabled = false, HorizontalContentAlignment = HorizontalAlignment.Stretch, MaxHeight = 560 };
@@ -375,7 +402,7 @@ public sealed partial class MainWindow
             if (account is null) { ForgetCloudAccount(provider); throw new InvalidOperationException(L.T("Journey.Cloud.AccountRequired", name)); }
             try
             {
-                var listing = await new CloudBrowseService().ListAsync(account, ct);
+                var listing = await new CloudBrowseService().ListAsync(account, await ResolveUploadFolderAsync(account, ct), ct);
                 _cloudListing = listing;
                 _cloudListingProvider = provider;
                 _cloudListedAt = DateTimeOffset.Now;
@@ -414,7 +441,8 @@ public sealed partial class MainWindow
             // The status line is small; the instruction for the browser is also shown where the user is looking.
             ShowBanner(L.T("Shell.SignInTitle", ProviderName(provider)), L.T("Shell.SignInHelp", (int)_cloudAuth.SignInTimeout.TotalMinutes), InfoBarSeverity.Informational);
             CloudAccount account;
-            try { account = await _cloudAuth.AuthenticateAsync(new OAuthClientOptions(provider, client, secret), ct); }
+            // With a folder for uploads set, Microsoft is asked for the files shared with the account too: the folder may be someone else's.
+            try { account = await _cloudAuth.AuthenticateAsync(new OAuthClientOptions(provider, client, secret, HasUploadFolder(provider)), ct); }
             // The instruction to finish in the browser must not stay on the screen once nothing waits for the browser any more.
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {

@@ -448,7 +448,7 @@ An upload uses the name the file has on the PC.
 <a name="cloud"></a>
 ## Uploading to the cloud
 
-Code: `src/Diga.Core/Cloud/CloudUploadService.cs`, `CloudAuthService.cs`, `CloudBrowseService.cs`, `CloudErrorDetail.cs`, `ProtectedTokenStore.cs`; `src/Diga.App/MainWindow.Cloud.cs`.
+Code: `src/Diga.Core/Cloud/CloudUploadService.cs`, `CloudAuthService.cs`, `CloudBrowseService.cs`, `CloudErrorDetail.cs`, `ProtectedTokenStore.cs`, `CloudFolderLinkStore.cs`; `src/Diga.App/MainWindow.Cloud.cs`.
 
 Nothing is uploaded until you tick files on the **Archive** page and choose **Upload to OneDrive** or **Upload to Google Drive**. The sign-in itself is described in [Cloud setup](CLOUD-SETUP.md), and what is stored about it in [Privacy](PRIVACY.md#sign-ins).
 
@@ -457,7 +457,7 @@ Nothing is uploaded until you tick files on the **Archive** page and choose **Up
 1. **Room.** Once, before the first file, the application asks the service how much space is free. If the ticked files need more, nothing is sent. If the service names no limit or the answer cannot be used, the upload goes ahead. The steps that follow are repeated for each file.
 2. **The sign-in.** If the saved sign-in is valid for less than two more minutes, it is renewed first.
 3. **Opening an upload session.** Both services have a way to send a large file in pieces, called a resumable upload.
-   - **OneDrive:** a `POST` to Microsoft Graph, `/me/drive/root:/<file name>:/createUploadSession`, with the file name and the instruction `"@microsoft.graph.conflictBehavior": "rename"`. The answer contains an upload address.
+   - **OneDrive:** a `POST` to Microsoft Graph, `/me/drive/root:/<file name>:/createUploadSession`, with the file name and the instruction `"@microsoft.graph.conflictBehavior": "rename"`. The answer contains an upload address. With a shared folder set, the address is `/drives/<drive>/items/<folder>:/<file name>:/createUploadSession` instead; see [A shared folder](#shared-folder).
    - **Google Drive:** a `POST` to `https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable` with the file name, and with the file's media type and size in the headers `X-Upload-Content-Type` and `X-Upload-Content-Length`. The upload address comes back in the `Location` header.
 4. **Checking the upload address.** See [below](#upload-address).
 5. **Sending.** The file is sent in pieces of 5 MiB (5,242,880 bytes), each with a `PUT` and a `Content-Range` header that names the bytes and the total size. The pieces go one at a time and in order.
@@ -503,11 +503,24 @@ One file that fails does not stop the others. Files that were not uploaded stay 
 - **It does not continue after the application was closed.** The upload address is kept in memory only. A file whose upload was interrupted that way starts from the beginning. The application sends no request that cancels the unfinished session at the service.
 - **It does not compare a checksum with the service.** "Uploaded" means: the service acknowledged every piece and confirmed the finished file with an identifier.
 - **It does not recognise a file that is already there.** A file sent twice is stored twice. For a file uploaded earlier in the same session the application asks first: **Upload again?**
-- **It does not replace, change or delete anything in the cloud.** Files go to the top folder of the OneDrive, or to the top level of My Drive. If the name is taken, OneDrive is asked to rename the new file. Google Drive is asked to create a new file, and the application's note on the page says that Google Drive then keeps both under the same name. The application sends no request that changes or deletes a file in the cloud.
+- **It does not replace, change or delete anything in the cloud.** Files go to the top folder of the OneDrive, to the shared folder when one is set, or to the top level of My Drive. If the name is taken, OneDrive is asked to rename the new file. Google Drive is asked to create a new file, and the application's note on the page says that Google Drive then keeps both under the same name. The application sends no request that changes or deletes a file in the cloud.
 
 ### The Cloud page
 
-**List the files** on the **Cloud** page reads what is stored: for OneDrive the top folder, for Google Drive what Google returns for the permission the application has, which the page describes as the files it uploaded with your Google client. It sends `GET` requests only and never asks for the content of a file. It reads at most five pages of 200 entries, takes at most 30 seconds for one request and 90 seconds in all, and says so when the list is incomplete. The address of the next page of a OneDrive list is requested only if it is an `https` address on `graph.microsoft.com`. Names from the service are shown with control characters and invisible format characters removed. The list is kept until you close the application.
+**List the files** on the **Cloud** page reads what is stored: for OneDrive the top folder, or the shared folder when one is set, for Google Drive what Google returns for the permission the application has, which the page describes as the files it uploaded with your Google client. It sends `GET` requests only and never asks for the content of a file. It reads at most five pages of 200 entries, takes at most 30 seconds for one request and 90 seconds in all, and says so when the list is incomplete. The address of the next page of a OneDrive list is requested only if it is an `https` address on `graph.microsoft.com`. Names from the service are shown with control characters and invisible format characters removed. The list is kept until you close the application.
+
+<a name="shared-folder"></a>
+### A shared folder
+
+In **Settings** the OneDrive card takes the link to a shared OneDrive or SharePoint folder. Uploads then go into that folder instead of the top folder of the account's own OneDrive. This part has run only against simulated Microsoft servers; the requests below follow Microsoft's documentation of the Graph interface as it read on 8 October 2026.
+
+- **The link** must be a complete `https` address of at most 2,048 characters, on the standard port and without a user name. It is stored encrypted, in a file of its own beside the sign-ins, not in the settings file.
+- **Looking the folder up.** Before every upload and every listing the application sends one `GET` to `https://graph.microsoft.com/v1.0/shares/<token>/driveItem`, where the token is `u!` followed by the link in unpadded base64url, which is the form Microsoft documents. The request carries the header `Prefer: redeemSharingLink`; Microsoft documents that as granting the caller durable access to the item, the same as opening the link in a browser. The answer names the folder: its identifier, the identifier of the drive that holds it, and its name. For a folder that belongs to someone else the answer can be a pointer, and the folder is then taken from the `remoteItem` inside it.
+- **What is accepted.** The answer must describe a folder. The two identifiers become part of the addresses that follow, so each must be at most 256 characters long and free of `/`, `\`, `?`, `#`, `%`, spaces and control characters; they are percent-encoded when the address is built. Anything else is refused with the application's own message.
+- **The requests that follow** address the folder by those identifiers: `POST …/drives/<drive>/items/<folder>:/<file name>:/createUploadSession` for each file, `GET …/drives/<drive>/items/<folder>/children` for the list, and `GET …/drives/<drive>?$select=quota` for the free space. If the drive does not say how much room it has, or refuses the question, the upload starts without that check.
+- **The permission.** A sign-in made while a folder is set asks Microsoft for `Files.ReadWrite.All` in place of `Files.ReadWrite`. Microsoft describes the first as access to all files the user can access and the second as access to the user's own files, with the note that for personal accounts the second also covers files shared with the user. The application reads from Microsoft's answer which of the two was granted, keeps that with the sign-in, and asks for the same when it renews the sign-in. A sign-in made before the folder was set keeps the narrower permission until the user connects again; the messages after **Save & check the folder** and after a refused upload say so.
+- **The link beside an uploaded file** is the sharing link itself, not the address OneDrive returned for the file. It opens the folder for everyone the link was made for, whichever account the browser is signed in to.
+- **A refusal.** If OneDrive answers the opening of an upload session with 403 or 404, the message says that the connected account must be allowed to add files to the folder. Such an answer is not asked again.
 
 <a name="limits"></a>
 ## Limits
@@ -520,7 +533,7 @@ One file that fails does not stop the others. Files that were not uploaded stay 
 - **No resuming.** A broken download or a broken easy-to-play file starts again from the beginning. An upload resumes only while the application keeps running.
 - **What "checked" means.** The checks compare what arrived with what the recorder announced, and the easy-to-play file with the download. They cannot compare anything with the recording on the recorder's disk.
 - **The preview depends on Windows.** It plays only if Windows can decode the recording's picture and sound.
-- **The cloud.** Uploads go to the top folder only. Google Drive needs a Google Cloud client of your own; see [Cloud setup](CLOUD-SETUP.md).
+- **The cloud.** Uploads go to the top folder, or for OneDrive to one shared folder you set; the application does not create folders and does not sort files into them. The shared folder has run only against simulated Microsoft servers. Google Drive needs a Google Cloud client of your own; see [Cloud setup](CLOUD-SETUP.md).
 
 <a name="tested"></a>
 ## What was tested, and what was not

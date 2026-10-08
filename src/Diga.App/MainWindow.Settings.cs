@@ -46,7 +46,8 @@ public sealed partial class MainWindow
         // The fields show what was typed last, saved or not; see _leavingPage below.
         var shown = _settingsDraft ?? _settings;
         // The destination and the way of saving are remembered from other pages; they are not this page's unsaved changes.
-        if (_settingsDraft is not null && _settingsDraft != _settings with { UploadProvider = _settingsDraft.UploadProvider, SaveAsContainer = _settingsDraft.SaveAsContainer })
+        if (_settingsDraft is not null && _settingsDraft != _settings with { UploadProvider = _settingsDraft.UploadProvider, SaveAsContainer = _settingsDraft.SaveAsContainer }
+            || _oneDriveFolderDraft is not null && _oneDriveFolderDraft.Trim() != _oneDriveFolderLink)
             page.Children.Add(new InfoBar { IsOpen = true, IsClosable = false, Severity = InfoBarSeverity.Informational, Message = L.T("Shell.UnsavedChanges") });
         var languageCard = new StackPanel { Spacing = 12 };
         languageCard.Children.Add(SectionTitle(L.T("Shell.LanguageTitle"), Symbol.World));
@@ -154,6 +155,14 @@ public sealed partial class MainWindow
         microsoftSetup.Children.Add(Muted(L.T("Shell.MicrosoftPermissions"), 12));
         microsoftSetup.Children.Add(CloudGuideLink(CloudProvider.OneDrive, Links.Document("CLOUD-SETUP.md", "onedrive-with-your-own-registration")));
 
+        // Where uploads go: the top folder, or the folder a sharing link leads to.
+        var folderSetup = new StackPanel { Spacing = 12 };
+        var oneDriveFolder = LabeledInput(folderSetup, L.T("Shell.OneDriveFolder"), _oneDriveFolderDraft ?? _oneDriveFolderLink);
+        oneDriveFolder.PlaceholderText = L.T("Shell.OneDriveFolderPlaceholder");
+        oneDriveFolder.IsSpellCheckEnabled = false;
+        folderSetup.Children.Add(Muted(L.T("Shell.OneDriveFolderHelp"), 12));
+        folderSetup.Children.Add(LinkButton(L.T("Shell.OneDriveFolderGuide"), Links.Document("CLOUD-SETUP.md", "shared-folder")));
+
         var googleSaved = _accountNames.ContainsKey(CloudProvider.GoogleDrive);
         var googleConnected = IsCloudConnected(CloudProvider.GoogleDrive);
         var googleCard = new StackPanel { Spacing = 15 };
@@ -191,6 +200,7 @@ public sealed partial class MainWindow
         _leavingPage = () =>
         {
             _settingsDraft = GatherSettings();
+            _oneDriveFolderDraft = oneDriveFolder.Text;
             _googleSecretDraft = _googleSecretStored ? "" : googleSecret.Password;
             _googleSecretStored = false;
         };
@@ -204,12 +214,23 @@ public sealed partial class MainWindow
             // A value pasted into the wrong field (an e-mail address, the client secret) would end in the settings file and in the browser's address.
             if (draft.OneDriveClientId.Length != 0 && !Guid.TryParseExact(draft.OneDriveClientId, "D", out _)) throw new InvalidDataException(L.T("Shell.MicrosoftClientShape"));
             if (draft.GoogleClientId.Length != 0 && !draft.GoogleClientId.EndsWith(".apps.googleusercontent.com", StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException(L.T("Shell.GoogleClientShape"));
+            var folderLink = oneDriveFolder.Text.Trim();
+            if (folderLink.Length != 0 && !CloudBrowseService.TryParseFolderLink(folderLink, out _)) throw new InvalidDataException(L.T("Core.Cloud.Folder.LinkInvalid"));
             var changed = CloudProviders.Where(provider => !StringComparer.Ordinal.Equals(ClientIdFor(_settings, provider), ClientIdFor(draft, provider))).ToArray();
             var (previousCache, previousOutput, previousFormat, previousWizard) = (_settings.CacheDirectory, _settings.OutputDirectory, _settings.DefaultFormat, _settings.UseWizard);
             // The page is saved by several buttons, so what the page does not show must survive it: the destination and the way of
             // saving are taken from the file as it is now.
             draft = await _settingsStore.UpdateAsync(stored => draft with { UploadProvider = _uploadProvider, SaveAsContainer = stored.SaveAsContainer }, ct);
             _settings = draft;
+            // The link to the folder for uploads is kept beside the sign-ins, encrypted, not in the settings file.
+            if (folderLink != _oneDriveFolderLink)
+            {
+                await _folderLinks.SaveAsync(CloudProvider.OneDrive, folderLink, ct);
+                _oneDriveFolderLink = folderLink;
+                _oneDriveFolderName = null;
+                // What was listed belongs to the folder that was set before.
+                if (_cloudListingProvider == CloudProvider.OneDrive) _cloudListing = null;
+            }
             // A sign-in belongs to the application or client ID it was made with. With another ID the application is not connected;
             // the saved sign-in stays where it is, is found again if the ID comes back, and is removed only by Disconnect, which asks.
             foreach (var provider in changed) ForgetCloudAccount(provider);
@@ -245,6 +266,26 @@ public sealed partial class MainWindow
         saveBar.Children.Add(save);
         _pageFooter.Content = saveBar;
 
+        // Saves the page and asks OneDrive, as the connected account, which folder the link leads to.
+        Task CheckOneDriveFolderAsync() => RunOperationAsync(async ct =>
+        {
+            await SaveDraftAsync(ct);
+            if (_oneDriveFolderLink.Length == 0) { ShowBanner(L.T("Shell.PreferencesSaved"), L.T("Shell.OneDriveFolderEmpty"), InfoBarSeverity.Informational); return; }
+            var account = IsCloudConnected(CloudProvider.OneDrive) ? await _cloudAuth.GetSavedAccountAsync(CloudProvider.OneDrive, ClientIdFor(CloudProvider.OneDrive), ct) : null;
+            if (account is null) { ShowBanner(L.T("Shell.PreferencesSaved"), L.T("Shell.OneDriveFolderConnectFirst"), InfoBarSeverity.Informational); return; }
+            SetProgress(null, L.T("Shell.OneDriveFolderChecking"));
+            var folder = await ResolveUploadFolderAsync(account, ct);
+            var found = L.T("Shell.OneDriveFolderCheckedHelp", folder!.Name);
+            // A sign-in made before a folder was set reaches the account's own files only. That is enough for the account's own
+            // folder, and for no one else's, so the way to the wider sign-in is offered with the good news. The question may
+            // have renewed the sign-in, and a renewal says anew what Microsoft gives it.
+            account = await _cloudAuth.GetSavedAccountAsync(CloudProvider.OneDrive, ClientIdFor(CloudProvider.OneDrive), ct) ?? account;
+            if (account.SharedFiles) ShowBanner(L.T("Shell.OneDriveFolderChecked"), found, InfoBarSeverity.Success);
+            else ShowBanner(L.T("Shell.OneDriveFolderChecked"), found + " " + L.T("Shell.OneDriveFolderOwnFiles"), InfoBarSeverity.Informational,
+                ActionButton(L.T("Shell.ConnectOneDrive"), () => ConnectCloudAsync(CloudProvider.OneDrive, _ => Task.CompletedTask)));
+        }, L.T("Shell.OneDriveFolderCheckedStatus"));
+        folderSetup.Children.Add(ActionButton(L.T("Shell.OneDriveFolderCheck"), CheckOneDriveFolderAsync));
+
         // Disconnect is offered only when there is a saved sign-in to remove. That includes one made with an earlier ID: changing
         // the ID does not remove it, and Disconnect is the only thing in the application that does.
         var savedSignIns = new ProtectedTokenStore();
@@ -255,6 +296,7 @@ public sealed partial class MainWindow
             ActionButton(L.T("Shell.ConnectOneDrive"), () => ConnectCloudAsync(CloudProvider.OneDrive, SaveDraftAsync), !IsCloudConnected(CloudProvider.OneDrive) && _cloudAskedFor is null or CloudProvider.OneDrive),
             microsoftDisconnect));
         if (microsoftSaved) microsoftCard.Children.Add(Muted(L.T("Shell.SwitchAccount"), 12));
+        microsoftCard.Children.Add(folderSetup);
         microsoftCard.Children.Add(Section("settings:microsoft", L.T("Shell.MicrosoftFirstSetup"), microsoftSetup, shown.OneDriveClientId.Length != 0));
         var googleDisconnect = ActionButton(L.T("Shell.Disconnect"), () => DisconnectCloudAsync(CloudProvider.GoogleDrive, SaveDraftAsync));
         AutomationProperties.SetName(googleDisconnect, L.T("Shell.DisconnectNamed", ProviderName(CloudProvider.GoogleDrive)));

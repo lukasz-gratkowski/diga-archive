@@ -4,7 +4,11 @@ using System.Text.Json.Serialization;
 namespace Diga.Core.Cloud;
 
 public enum CloudProvider { GoogleDrive, OneDrive }
-public sealed record OAuthClientOptions(CloudProvider Provider, string ClientId, string? ClientSecret = null)
+/// <summary>
+/// <paramref name="SharedFiles"/> makes a OneDrive sign-in ask for the files other people shared with the account as well as
+/// the account's own. Microsoft requires that of a work or school account before it may write into someone else's folder.
+/// </summary>
+public sealed record OAuthClientOptions(CloudProvider Provider, string ClientId, string? ClientSecret = null, bool SharedFiles = false)
 {
     public override string ToString() => $"{Provider} ({ClientId})";
 }
@@ -23,6 +27,8 @@ public sealed record CloudAccount
     public string? OwnerName { get; init; }
     /// <summary>The provider refused this sign-in (it expired or was withdrawn). Remembered so that the next start does not call it connected.</summary>
     public bool SignInEnded { get; init; }
+    /// <summary>Microsoft gave this sign-in the files shared with the account too, not only the account's own. Kept, because a renewal must ask for what was given.</summary>
+    public bool SharedFiles { get; init; }
     /// <summary>Something the user should know about a sign-in that succeeded, such as a service that is not switched on yet. Not saved.</summary>
     [JsonIgnore] public string? Notice { get; init; }
     /// <summary>How the application names the connected drive. Worked out each time, in the language in use; never stored.</summary>
@@ -50,8 +56,19 @@ public sealed class CloudSignInExpiredException(CloudProvider provider, string m
     public CloudProvider Provider { get; } = provider;
 }
 
-/// <summary>One file to upload. It goes to the top folder of the drive under its own name; the service adds a number when the name is taken.</summary>
-public sealed record CloudUploadRequest(CloudAccount Account, string SourcePath);
+/// <summary>
+/// A folder that uploads go to instead of the top folder of the drive: the folder a sharing link leads to, as OneDrive
+/// described it when the link was looked up. <see cref="Link"/> is that sharing link. In a browser it opens the folder for
+/// everyone the folder is shared with, whichever account the browser is signed in to; the address of a file in the folder
+/// would open only for an account that has the file in its own storage.
+/// </summary>
+public sealed record CloudFolder(string DriveId, string ItemId, string Name, Uri Link);
+
+/// <summary>
+/// One file to upload, under its own name; the service adds a number when the name is taken. It goes to the top folder of the
+/// drive, or into <paramref name="Folder"/> when one is given (OneDrive only).
+/// </summary>
+public sealed record CloudUploadRequest(CloudAccount Account, string SourcePath, CloudFolder? Folder = null);
 public sealed record CloudUploadResult(string Id, string Name, string? WebUrl);
 /// <summary><paramref name="Retry"/> is above zero while the upload waits to try again after a failure: the number of failures in a row.</summary>
 public sealed record CloudUploadProgress(long BytesUploaded, long TotalBytes, int Retry = 0)

@@ -58,7 +58,10 @@ public sealed partial class MainWindow
                     ? L.T("Journey.Archive.InCloud", ProviderName(copy.Provider), copy.At.ToLocalTime().ToString("t"))
                     : L.T("Journey.Archive.InCloudAs", ProviderName(copy.Provider), copy.At.ToLocalTime().ToString("t"), copy.Name);
                 entry.Children.Add(new TextBlock { Text = "✓  " + stored, FontSize = 13, TextWrapping = TextWrapping.Wrap, Style = AppStyle("DigaTealTextStyle") });
-                if (copy.Link is not null) entry.Children.Add(LinkButton(L.T("Journey.Archive.OpenInCloud", ProviderName(copy.Provider)), copy.Link.AbsoluteUri));
+                // A file in a shared folder is reached through the folder's sharing link: the file's own address opens only for an
+                // account that has the file in its storage, and the browser may be signed in to another one.
+                if (copy.Link is not null) entry.Children.Add(LinkButton(copy.Folder is { } folder ? L.T("Journey.Archive.OpenSharedFolder", folder)
+                    : L.T("Journey.Archive.OpenInCloud", ProviderName(copy.Provider)), copy.Link.AbsoluteUri));
             }
             var sourceLabel = L.T("Journey.Archive.Source", exported.SourceName);
             var savedLabel = L.T("Journey.Archive.SavedFile", Path.GetFileName(exported.Path));

@@ -21,7 +21,7 @@ AMG DIGA Archive is a free Windows 11 application. It finds the recorder on your
 - **Goes on when one recording fails.** When you save several recordings, a failure does not end the whole save, and the message at the end says how many were saved and names the ones that were not, each with its reason.
 - **Names the files for you.** Type an order or reference number once and every file saved in that session carries it.
 - **Previews** up to 45 seconds of a recording before you save it.
-- **Uploads to your own cloud**, OneDrive or Google Drive, and shows the top folder of your OneDrive or the files it uploaded to your Google Drive.
+- **Uploads to your own cloud**, OneDrive or Google Drive, and shows the top folder of your OneDrive or the files it uploaded to your Google Drive. OneDrive uploads can go to one shared folder instead, so that several people collect their recordings in the same place.
 - **Never replaces an existing file**, on the PC or in the cloud, and never writes to the recorder.
 
 ## What it does not do
@@ -35,11 +35,11 @@ AMG DIGA Archive is a free Windows 11 application. It finds the recorder on your
 
 Please read this before relying on the application for recordings you cannot replace.
 
-- **Automated tests.** About 700 test cases run on every change. They cover the recorder protocol against simulated recorders, the cloud protocols against simulated Microsoft and Google servers, and saving and checking generated video with the real FFmpeg and MediaInfo. The window itself is not covered by automated tests. [Testing](docs/TESTING.md) says what each group covers.
+- **Automated tests.** About 750 test cases run on every change. They cover the recorder protocol against simulated recorders, the cloud protocols against simulated Microsoft and Google servers, and saving and checking generated video with the real FFmpeg and MediaInfo. The window itself is not covered by automated tests. [Testing](docs/TESTING.md) says what each group covers.
 - **Real hardware: one report.** The project owns no recorder. The owner of a recorder reported as a DMR-BS850 confirmed on 2 October 2026 that version 0.5.2 found the recorder, opened its folders and saved recordings both as exact copies (`.mpg`) and as MKV, and that connecting OneDrive with the built-in registration and uploading worked. The report did not say which recordings were chosen or how the saved files were checked.
 - **OneDrive: the built-in registration is new.** That report was made with the earlier built-in Microsoft registration. On 5 October 2026 the application got a new one (application ID `bfd21bf0-32a9-4520-8bbb-d525e3d34aea`). Nobody has reported connecting or uploading through the new registration yet. The only thing checked for it is that Microsoft's sign-in service knows the ID and accepts the `http://localhost` redirect; this was checked without signing in. A sign-in saved with the earlier built-in ID is not used by the new one: you connect once more.
 - **Versions 0.6.0 to 0.6.2** have run from start to finish only against the project's recorder emulator, not against a real recorder.
-- **Not tried by the project:** other recorder models, asking a real recorder by its address, DVB subtitles from a real broadcast, Google Drive against Google's real servers, and work or school OneDrive accounts.
+- **Not tried by the project:** other recorder models, asking a real recorder by its address, DVB subtitles from a real broadcast, Google Drive against Google's real servers, work or school OneDrive accounts, and uploading into a shared OneDrive or SharePoint folder.
 - **Releases are not digitally signed yet.** See [Install](#install).
 
 Whether a recorder offers a recording for saving at all depends on the model, its firmware and the recording. If you try the application, a [recorder report](https://github.com/lukasz-gratkowski/diga-archive/issues/new/choose) helps everyone after you, whether it worked or not.
@@ -79,6 +79,8 @@ Uploading is optional and never starts by itself.
 - The list **Cloud destination** decides where uploads go. You can connect both services and switch between them.
 
 The [cloud setup guide](docs/CLOUD-SETUP.md) takes you through both, step by step, and explains the usual error messages. The **Cloud** page lists the top folder of your OneDrive, or the files this application uploaded to your Google Drive. It only looks: it never downloads or changes anything there.
+
+For OneDrive you can paste the link to a shared OneDrive or SharePoint folder in **Settings**. Uploads then go into that folder, the **Cloud** page lists it, and the link beside an uploaded file opens the folder. The guide has a section on it: [A shared folder for uploads](docs/CLOUD-SETUP.md#shared-folder). This part has run only against simulated Microsoft servers.
 
 ## Your data stays yours
 
@@ -147,7 +149,7 @@ OneDrive nie wymaga żadnej konfiguracji, bo aplikacja ma wbudowaną rejestracj�
 - **Prawdziwy sprzęt: jedno zgłoszenie.** Projekt nie ma własnej nagrywarki. Właściciel nagrywarki zgłoszonej jako DMR-BS850 potwierdził 2 października 2026 r., że wersja 0.5.2 znalazła nagrywarkę, otworzyła jej foldery i zapisała nagrania zarówno jako dokładne kopie (`.mpg`), jak i jako pliki MKV, oraz że połączenie z OneDrive przez wbudowaną rejestrację i przesyłanie plików działały. Zgłoszenie nie podaje, które nagrania wybrano ani jak sprawdzono zapisane pliki.
 - **OneDrive: wbudowana rejestracja jest nowa.** Tamto zgłoszenie dotyczyło wcześniejszej wbudowanej rejestracji Microsoft. 5 października 2026 r. aplikacja otrzymała nową (identyfikator aplikacji `bfd21bf0-32a9-4520-8bbb-d525e3d34aea`). Nikt nie zgłosił jeszcze ani połączenia, ani przesłania plików przez nową rejestrację. Sprawdzono jedynie, bez logowania, że usługa logowania Microsoft zna ten identyfikator i przyjmuje adres przekierowania `http://localhost`. Logowanie zapisane z wcześniejszym wbudowanym identyfikatorem nie jest używane przez nowy: trzeba połączyć się jeszcze raz.
 - **Wersje od 0.6.0 do 0.6.2** uruchomiono od początku do końca wyłącznie z emulatorem nagrywarki przygotowanym w projekcie, nie z prawdziwą nagrywarką.
-- **Nie sprawdzono:** innych modeli nagrywarek, pytania prawdziwej nagrywarki po adresie, napisów DVB z prawdziwej audycji, Dysku Google z prawdziwymi serwerami Google (projekt nigdy tego nie uruchomił) ani kont służbowych i szkolnych OneDrive.
+- **Nie sprawdzono:** innych modeli nagrywarek, pytania prawdziwej nagrywarki po adresie, napisów DVB z prawdziwej audycji, Dysku Google z prawdziwymi serwerami Google (projekt nigdy tego nie uruchomił), kont służbowych i szkolnych OneDrive ani przesyłania do udostępnionego folderu OneDrive lub SharePoint.
 - **Wydania nie są jeszcze podpisane cyfrowo**, dlatego przy uruchamianiu instalatora system Windows pokazuje ostrzeżenie filtru SmartScreen. Podpisywanie (Microsoft Azure Artifact Signing) jest przygotowane i zostanie włączone później.
 
 Projekt jest niezależny od firmy Panasonic; Panasonic i DIGA są znakami towarowymi ich właściciela. Nagrań chronionych przed kopiowaniem aplikacja nie zapisuje.

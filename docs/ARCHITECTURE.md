@@ -130,10 +130,12 @@ Each type is in the file of the same name unless a file is named.
 |---|---|
 | `CloudAuthService` | The sign-in: OAuth 2.0 authorisation code flow with PKCE, the browser, and a listener on the PC's loopback addresses. Also `RefreshAsync`, which renews a sign-in, and `DisconnectAsync`. |
 | `ICloudTokenStore`, `ProtectedTokenStore` | Where sign-ins are kept: one file for each service and client ID, encrypted for the Windows user. |
+| `CloudFolderLinkStore` | Where the link to a shared folder for uploads is kept: one encrypted file beside the sign-ins, under a name **Disconnect** does not match. An empty link removes the file. |
+| `ProtectedFile` (internal) | What the two stores share: reading a file encrypted for the Windows user, and writing one through a temporary file that then takes the place of the old one. |
 | `CloudUploadService` | Uploads one file through the service's resumable upload, in pieces of 5 MiB, and tries again after failures. `ValidateSessionUri` checks the upload address. |
-| `CloudBrowseService` | The read-only list of cloud files (`ListAsync`) and the free space (`GetFreeSpaceAsync`). It sends `GET` requests only. |
+| `CloudBrowseService` | The read-only list of cloud files (`ListAsync`) and the free space (`GetFreeSpaceAsync`), of the top folder or of a shared folder. `ResolveFolderAsync` asks OneDrive which folder a sharing link leads to; `TryParseFolderLink` and `ShareToken` say what counts as such a link and how it is written for Microsoft Graph. The service sends `GET` requests only. |
 | `CloudErrorDetail` (internal) | Takes the error code and the first line of the message out of a service's error answer, and nothing else. |
-| `CloudAccount`, `CloudProvider`, `CloudSignInExpiredException` and others (in `CloudModels.cs`) | The data of the services above. `CloudAccount.ToString` returns the display name, so that tokens cannot end up in a message or a log by accident. |
+| `CloudAccount`, `CloudProvider`, `CloudSignInExpiredException` and others (in `CloudModels.cs`) | The data of the services above. `CloudAccount.ToString` returns the display name, so that tokens cannot end up in a message or a log by accident. `CloudFolder` is a shared folder as OneDrive described it: the drive, the item, the name and the sharing link. `CloudAccount.SharedFiles` records that Microsoft gave the sign-in the files shared with the account too; `OAuthClientOptions.SharedFiles` asks for that. |
 
 ### Localization
 
@@ -353,11 +355,11 @@ These are not promises to users, but the code is consistent about them, and a ch
 - **A time limit is a failure, not a cancellation.** When a limit of the library runs out, the library reports a failure with a reason, in most places as a `TimeoutException`. `RunOperationAsync` treats an `OperationCanceledException` as a cancellation only when the user's own token was cancelled, and shows **Cancelled.** only then. `Describe` gives any other one the sentence that the other side did not answer in time.
 - **Everything from the network is bounded:** the size of an answer, the number of entries and pages, the depth of XML, the length of a field, and the time.
 - **Nothing happens on the network without an action of the user.** Constructors and the loading of settings open no connection. Loading the saved sign-ins at the start reads files only.
-- **Secrets stay in one place.** Tokens and the Google client secret are only in `ProtectedTokenStore`. They are not in `AppSettings`, and messages are built so that they cannot contain them (`CloudErrorDetail`, `CloudAccount.ToString`).
+- **Secrets stay in one place.** Tokens and the Google client secret are only in `ProtectedTokenStore`, and the link to a shared folder, which can itself open the folder, only in `CloudFolderLinkStore`. They are not in `AppSettings`, and messages are built so that they cannot contain them (`CloudErrorDetail`, `CloudAccount.ToString`).
 - **External programs get an argument list**, never a command line for a shell. Whenever FFmpeg or FFprobe is given a file to read, it is limited to local files with `-protocol_whitelist file,pipe`.
 - **The application deletes only what it can recognise as its own:** by a name pattern and by the folder it is in.
 - **One place for each fact.** The FFmpeg version, addresses and checksums are in `FfmpegPackage.json` and are read from there by the library, by `scripts/Get-Dependencies.ps1` and, through `scripts/New-Release.ps1`, by the installer. The addresses opened in the browser are in `Links.cs`. The version of the application is written twice: in `Directory.Build.props`, and in `installer/Diga.iss`, which repeats it as the default of `AppVersion`. `scripts/New-Release.ps1` reads the version from `Directory.Build.props` and passes it to the installer, which overrides that default; [Releasing](RELEASING.md) says to change both.
-- **Guide links carry the version.** `Links.Document` builds addresses of the form `…/blob/v<version>/docs/<name>`, in Polish for the guides listed in `Links.Translated`. The application links to `RECORDER-SETUP.md` and to the headings `onedrive-with-your-own-registration` and `google-drive` of `CLOUD-SETUP.md`. Renaming one of these needs a change in the code.
+- **Guide links carry the version.** `Links.Document` builds addresses of the form `…/blob/v<version>/docs/<name>`, in Polish for the guides listed in `Links.Translated`. The application links to `RECORDER-SETUP.md` and to the headings `onedrive-with-your-own-registration`, `shared-folder` and `google-drive` of `CLOUD-SETUP.md`. Renaming one of these needs a change in the code.
 
 <a name="tests"></a>
 ## Where the tests are

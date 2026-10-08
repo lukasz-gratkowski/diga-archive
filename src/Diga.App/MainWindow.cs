@@ -639,5 +639,9 @@ public sealed partial class MainWindow : Window
         public IReadOnlyList<CloudCopy> CloudCopies { get; init; } = [];
     }
 
-    private sealed record CloudCopy(Diga.Core.Cloud.CloudProvider Provider, string Name, Uri? Link, DateTimeOffset At);
+    /// <summary>
+    /// One upload of a saved file. <paramref name="Link"/> opens it in a browser: the file itself, or, for an upload into the
+    /// shared folder set in Settings, that folder by its sharing link, whose name is then in <paramref name="Folder"/>.
+    /// </summary>
+    private sealed record CloudCopy(Diga.Core.Cloud.CloudProvider Provider, string Name, Uri? Link, DateTimeOffset At, string? Folder = null);
 }

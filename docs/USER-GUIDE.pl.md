@@ -478,11 +478,11 @@ Jeśli usługa nie jest jeszcze połączona, aplikacja przeniesie Cię na stron�
 
 Czego się spodziewać:
 
-- Pliki trafiają do głównego folderu Twojego OneDrive albo na najwyższy poziom Mojego dysku na Dysku Google. Nic nie jest tam zastępowane. Jeśli nazwa jest zajęta, OneDrive zapisuje nowy plik pod zmienioną nazwą, a Dysk Google przechowuje drugi plik pod tą samą nazwą.
+- Pliki trafiają do głównego folderu Twojego OneDrive albo na najwyższy poziom Mojego dysku na Dysku Google. Jeśli na stronie **Ustawienia** ustawisz udostępniony folder dla OneDrive, trafiają do tego folderu. Nic nie jest tam zastępowane. Jeśli nazwa jest zajęta, OneDrive zapisuje nowy plik pod zmienioną nazwą, a Dysk Google przechowuje drugi plik pod tą samą nazwą.
 - Przed rozpoczęciem aplikacja pyta usługę o wolne miejsce i przerywa, jeśli zaznaczone pliki się nie zmieszczą.
 - Wiersz na dole okna pokazuje przesyłany plik, ilość wysłanych danych, szybkość i pozostały czas. Jeśli połączenie zostanie przerwane, przesyłanie czeka i samo ponawia próby, do 15 minut bez żadnej odpowiedzi, a potem kontynuuje od miejsca, w którym stanęło. W tym czasie wiersz o tym informuje.
 - Przycisk **Anuluj** zatrzymuje przesyłanie. Pliki już przesłane zostają w chmurze. Plik przesyłany w chwili zatrzymania trzeba będzie przesłać od początku.
-- Przesłany plik przestaje być zaznaczony i dostaje wiersz taki jak **Przesłano do usługi OneDrive o 14:05**, z odnośnikiem zaczynającym się od słów **Otwórz w usłudze**. Pliki, których nie udało się przesłać, pozostają zaznaczone, a komunikat podaje przyczynę dla każdego.
+- Przesłany plik przestaje być zaznaczony i dostaje wiersz taki jak **Przesłano do usługi OneDrive o 14:05**, z odnośnikiem zaczynającym się od słów **Otwórz w usłudze**. Przy ustawionym udostępnionym folderze odnośnik brzmi **Otwórz udostępniony folder** i otwiera ten folder; działa dla każdego, dla kogo utworzono link do folderu, niezależnie od tego, na jakie konto Microsoft zalogowana jest przeglądarka. Pliki, których nie udało się przesłać, pozostają zaznaczone, a komunikat podaje przyczynę dla każdego.
 - Aplikacja nie rozpoznaje pliku, który już jest w chmurze. Ponowne przesłanie zapisze go tam drugi raz. W obrębie jednej sesji aplikacja najpierw zapyta **Przesłać ponownie?**
 
 O tym, jak dalece sprawdzono łączenie i przesyłanie, mówi część [Jak dalece aplikacja została sprawdzona](#tested).
@@ -499,7 +499,7 @@ Strona **Chmura**, w nawigacji pod pięcioma krokami, pokazuje, co już jest w T
 
 To, co pokazuje lista, zależy od usługi:
 
-- OneDrive: wszystko w głównym folderze Twojego OneDrive, czyli tam, dokąd aplikacja przesyła pliki. Nie tylko nagrania.
+- OneDrive: wszystko w głównym folderze Twojego OneDrive, czyli tam, dokąd aplikacja przesyła pliki. Nie tylko nagrania. Przy ustawionym udostępnionym folderze strona pokazuje ten folder.
 - Dysk Google: tylko pliki przesłane przez tę aplikację za pomocą Twojego klienta Google. Google nie pozwala jej zobaczyć niczego innego na Twoim Dysku.
 
 Każda pozycja ma nazwę, rozmiar i datę zmiany; lista jest ułożona od najnowszych. Odnośnik **Otwórz w przeglądarce** otwiera pozycję na stronie internetowej usługi. Bardzo długa lista jest odczytywana tylko w części (mniej więcej pierwszy tysiąc pozycji) i strona o tym informuje. Aplikacja odczytuje nazwy, rozmiary i daty tylko na Twoje żądanie, a listę przechowuje wyłącznie do zamknięcia aplikacji.
@@ -536,6 +536,7 @@ Opcja **Prowadź mnie do kolejnego kroku** sprawia, że aplikacja sama przechodz
 
 - Lista **Miejsce docelowe w chmurze** decyduje, dokąd przesyła pliki strona **Archiwum** i co pokazuje strona **Chmura**.
 - Karta Microsoft OneDrive ma przyciski **Połącz z OneDrive** i **Rozłącz**. Nic więcej nie jest potrzebne: rejestracja w Microsoft jest wbudowana w aplikację. Sekcja **Własna rejestracja aplikacji w Microsoft** jest dla nielicznych, którzy potrzebują własnej; pokazuje też wbudowany identyfikator aplikacji.
+- Pole **Folder na przesyłane pliki (opcjonalnie)** na tej samej karcie przyjmuje link do udostępnionego folderu OneDrive lub SharePoint. Pliki trafiają wtedy do tego folderu zamiast do głównego folderu Twojego OneDrive. Przycisk **Zapisz i sprawdź folder** zapisuje link i pyta OneDrive, do jakiego folderu on prowadzi. Zostaw pole puste, aby pozostać przy folderze głównym. Dokument [Konfiguracja chmury](CLOUD-SETUP.pl.md#shared-folder) wyjaśnia, jak udostępnić folder i które konta mogą z niego korzystać, oraz informuje, że ta część była dotąd uruchamiana tylko z symulowanymi serwerami Microsoft.
 - Karta Dysku Google ma pola **Identyfikator klienta Google** i **Klucz tajny klienta Google** oraz przyciski **Połącz z Dyskiem Google** i **Rozłącz**. Dysk Google wymaga przed pierwszym logowaniem jednorazowej konfiguracji po stronie Google, ponieważ warunki Google nie pozwalają aplikacji open source dostarczać własnych danych uwierzytelniających Google. Sekcja **Co może Dysk Google i limit siedmiu dni** wyjaśnia, co aplikacja może robić na Twoim Dysku.
 - Przycisk **Zobacz, co jest w chmurze** otwiera stronę **Chmura**.
 

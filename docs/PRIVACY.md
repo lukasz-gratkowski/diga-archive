@@ -55,7 +55,7 @@ That is usually `C:\Users\<your name>\AppData\Local\Diga`. Paste `%LOCALAPPDATA%
 |---|---|---|---|
 | `settings.json` | Your settings | When you first save settings or the application remembers a choice | By hand |
 | `settings.invalid-<date>-<time>.json` | A settings file that could not be used and was set aside | At a start that finds such a file | By hand |
-| `Accounts` (folder) | Saved cloud sign-ins, encrypted | When you connect a cloud account | Its files with **Disconnect**; the folder by uninstalling |
+| `Accounts` (folder) | Saved cloud sign-ins and the link to a shared folder for uploads, encrypted | When you connect a cloud account or save such a link | The sign-ins with **Disconnect**; the link by clearing its field in **Settings**; the folder by uninstalling |
 | `Cache` (folder) | Temporary files, unless you chose another folder | At the first preview or details of a session | Its content when the application closes; the folder by uninstalling |
 | `tools` (folder) | FFmpeg, if you downloaded it inside the application | When you choose the FFmpeg download | Uninstalling |
 | `logs` (folder) | The error log | At the first failure | Its files with **Delete the error log**; the folder by uninstalling |
@@ -126,7 +126,7 @@ The digits are the SHA-256 of the application or client ID the sign-in was made 
 
 **When a file is written.** After a sign-in, each time the application renews the access token during an upload or a listing, and when the service refuses the sign-in.
 
-**When a file is removed.** **Disconnect** removes every file of that service, including one made with an ID you used earlier. Uninstalling removes the whole `Accounts` folder. Changing the application or client ID in **Settings** does not remove the file of the previous ID: it stays, encrypted and unused, and is used again if you return to that ID.
+**When a file is removed.** **Disconnect** removes every sign-in file of that service, including one made with an ID you used earlier. Uninstalling removes the whole `Accounts` folder. Changing the application or client ID in **Settings** does not remove the file of the previous ID: it stays, encrypted and unused, and is used again if you return to that ID.
 
 **The built-in Microsoft application ID changed on 5 October 2026.** The built-in ID is now `bfd21bf0-32a9-4520-8bbb-d525e3d34aea`. A sign-in saved with the earlier built-in ID has a different file name and is not used by the new one, so you connect once more. The earlier file stays in `Accounts` until one of these happens: you choose **Disconnect**, which removes every OneDrive sign-in on the PC; you uninstall; or you delete the files `OneDrive-*.bin` by hand. **Disconnect** can be chosen while any OneDrive sign-in is saved, also when only the earlier one is. The permission you gave to the earlier registration is a separate matter; see [Withdrawing the cloud permissions](#withdraw). What has and has not been tried with the new registration is stated in [How it works](HOW-IT-WORKS.md#tested).
 
@@ -285,9 +285,23 @@ Microsoft is contacted only after you choose **Connect OneDrive**, an upload to 
 | **List the files**, **Refresh the list** | `https://graph.microsoft.com/v1.0/me/drive/root/children`, and further pages on the same host | The sign-in. The application asks for names, sizes, dates and web links of the top folder. |
 | **Disconnect** | nothing | The sign-in is removed from the PC. Microsoft is not told. |
 
+With a shared folder for uploads set (see [below](#shared-folder)), four of these requests go to other addresses on the same host:
+
+| When | Address | What is sent |
+|---|---|---|
+| **Save & check the folder**; before every upload; before every listing | `https://graph.microsoft.com/v1.0/shares/<the link, encoded>/driveItem` | The sign-in and, in the address, the sharing link you pasted. The header `Prefer: redeemSharingLink` asks Microsoft to accept the link for the connected account, as opening it in a browser would. |
+| Upload: before the first file | `https://graph.microsoft.com/v1.0/drives/<drive>` | The sign-in. The application asks the drive that holds the folder how much space is free. |
+| Upload: for each file | `https://graph.microsoft.com/v1.0/drives/<drive>/items/<folder>:/<file name>:/createUploadSession` | The sign-in and the file name |
+| **List the files**, **Refresh the list** | `https://graph.microsoft.com/v1.0/drives/<drive>/items/<folder>/children`, and further pages on the same host | The sign-in. The application asks for names, sizes, dates and web links of the shared folder. |
+
 The upload address must be an `https` address whose host is, or ends with, one of `1drv.com`, `onedrive.com`, `microsoftpersonalcontent.com`, `sharepoint.com`, `sharepoint.cn`, `sharepoint.us`, `storage.live.com`. Otherwise nothing is sent to it.
 
-**The permissions.** The application asks for `offline_access`, which lets it renew the sign-in without asking you each time, and for the Microsoft Graph permission `Files.ReadWrite`. The application describes it on its OneDrive card: **Microsoft will ask whether this application may have full access to your files. It uses that permission only to add new files to the top folder of your OneDrive and to list that folder; it never changes or deletes a file that is already there.** The requests in the table are all the requests the code sends to Microsoft.
+**The permissions.** The application asks for `offline_access`, which lets it renew the sign-in without asking you each time, and for the Microsoft Graph permission `Files.ReadWrite`. The application describes it on its OneDrive card: **Microsoft will ask whether this application may have full access to your files; when a folder for uploads is set below, it asks about all files you can access, because that folder may belong to someone else. The application uses the permission only to add new files to the top folder of your OneDrive, or to the folder set below, and to list that folder; it never changes or deletes a file that is already there.** The requests in the two tables are all the requests the code sends to Microsoft.
+
+When a shared folder for uploads is set, a new sign-in asks for `Files.ReadWrite.All` in place of `Files.ReadWrite`. Microsoft describes it as full access to all files the user can access; it is what Microsoft requires of a work or school account before an application may write into a folder that belongs to someone else. The application uses it for the four requests in the second table and for nothing else. Which of the two permissions Microsoft granted is kept with the sign-in.
+
+<a name="shared-folder"></a>
+**The link to a shared folder.** Code: `src/Diga.Core/Cloud/CloudFolderLinkStore.cs`, `ProtectedFile.cs`. The link you paste into **Folder for uploads (optional)** is stored in `%LOCALAPPDATA%\Diga\Accounts\folder-OneDrive.bin`, encrypted with the Windows Data Protection API for the current user in the same way as the sign-ins, with an extra value of its own. It is not written to the settings file, because a sharing link of the kind that works for anyone is itself a key to the folder. The file is written when you save a link, removed when you save an empty field, and removed with the `Accounts` folder by uninstalling. **Disconnect** leaves it. A file that cannot be decrypted counts as no folder: uploads then go to the top folder. The link is sent to Microsoft Graph only. On the **Archive** page it becomes the link beside each file uploaded into the folder, and it is kept in memory for that until you close the application. The error log can contain the message Microsoft returned for a refused link, but the application does not write the link itself to the log.
 
 <a name="google"></a>
 ### Google, for Google Drive
@@ -401,7 +415,7 @@ If Google Drive is connected, choose **Disconnect** in the application before yo
 - everything the installer put into the application's folder, the shortcuts and the entry in the list of installed apps;
 - an FFmpeg downloaded by the installer (in the application's `tools` folder), with its licence texts;
 - an FFmpeg downloaded by the application (`%LOCALAPPDATA%\Diga\tools`), with its licence texts and any unfinished download;
-- the saved cloud sign-ins: the whole folder `%LOCALAPPDATA%\Diga\Accounts`, and with it a saved Google client secret;
+- the saved cloud sign-ins: the whole folder `%LOCALAPPDATA%\Diga\Accounts`, and with it a saved Google client secret and the saved link to a shared folder;
 - the default temporary files folder, `%LOCALAPPDATA%\Diga\Cache`;
 - the error log, `%LOCALAPPDATA%\Diga\logs`, and the folder `%LOCALAPPDATA%\DigaArchive`, where versions up to 0.5.2 kept their log;
 - the folder `%LOCALAPPDATA%\Diga` itself, if it is empty afterwards.

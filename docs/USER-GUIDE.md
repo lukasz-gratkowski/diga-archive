@@ -478,11 +478,11 @@ If the service is not connected yet, the application takes you to **Settings** w
 
 What to expect:
 
-- Files go to the top folder of your OneDrive, or to the top level of My Drive in Google Drive. Nothing there is replaced. If the name is taken, OneDrive stores the new file under a different name, and Google Drive keeps a second file under the same name.
+- Files go to the top folder of your OneDrive, or to the top level of My Drive in Google Drive. If you set a shared folder for OneDrive in **Settings**, they go into that folder instead. Nothing there is replaced. If the name is taken, OneDrive stores the new file under a different name, and Google Drive keeps a second file under the same name.
 - Before it starts, the application asks the service how much room is free, and stops if the ticked files do not fit.
 - The line at the bottom shows the file being sent, how much of it has gone, the speed and the time left. If the connection is interrupted, the upload waits and tries again by itself, for up to 15 minutes without an answer, and then continues where it was. The line says so meanwhile.
 - **Cancel** stops the upload. Files already uploaded stay in the cloud. The file that was being sent has to start again.
-- An uploaded file is unticked and gets a line such as **Uploaded to OneDrive at 14:05**, with a link that begins **Open in**. Files that failed stay ticked, and the message gives the reason for each.
+- An uploaded file is unticked and gets a line such as **Uploaded to OneDrive at 14:05**, with a link that begins **Open in**. With a shared folder set, the link reads **Open the shared folder** and opens that folder; it works for everyone the folder's link was made for, whichever Microsoft account their browser is signed in to. Files that failed stay ticked, and the message gives the reason for each.
 - The application does not recognise a file that is already in the cloud. Uploading it again stores it twice. Within one session it asks **Upload again?** first.
 
 How far connecting and uploading have been tested is said under [How far it has been tested](#tested).
@@ -499,7 +499,7 @@ How far connecting and uploading have been tested is said under [How far it has 
 
 What the list shows depends on the service:
 
-- OneDrive: everything in the top folder of your OneDrive, which is where the application puts its uploads. Not only recordings.
+- OneDrive: everything in the top folder of your OneDrive, which is where the application puts its uploads. Not only recordings. With a shared folder set, the page lists that folder instead.
 - Google Drive: only the files this application uploaded with your Google client. Google does not let it see anything else in your Drive.
 
 Each entry shows its name, its size and when it was changed, newest first. **Open in browser** opens it on the website of the service. A very long list is read only in part (about the first thousand entries), and the page says so. The application reads names, sizes and dates only when you ask, and keeps the list only until you close the application.
@@ -536,6 +536,7 @@ Each entry shows its name, its size and when it was changed, newest first. **Ope
 
 - **Cloud destination** decides where **Archive** uploads to and what the **Cloud** page shows.
 - The card for Microsoft OneDrive has the buttons **Connect OneDrive** and **Disconnect**. Nothing else is needed: a registration at Microsoft is built into the application. The section **Using your own Microsoft registration** is for the few who need their own; it also shows the built-in application ID.
+- The field **Folder for uploads (optional)** on the same card takes the link to a shared OneDrive or SharePoint folder. With it, uploads go into that folder instead of the top folder of your OneDrive. **Save & check the folder** saves the link and asks OneDrive which folder it leads to. Leave the field empty to keep the top folder. [Cloud setup](CLOUD-SETUP.md#shared-folder) explains how to share a folder, which accounts can use it, and that this part has so far run only against simulated Microsoft servers.
 - The card for Google Drive has the fields **Google client ID** and **Google client secret** and the buttons **Connect Google Drive** and **Disconnect**. Google Drive needs a one-time setup at Google before the first sign-in, because Google's terms do not allow an open-source application to bring its own Google credentials. The section **What Google Drive may do, and the seven-day limit** says what the application may do in your Drive.
 - **See what is in the cloud** opens the **Cloud** page.
 

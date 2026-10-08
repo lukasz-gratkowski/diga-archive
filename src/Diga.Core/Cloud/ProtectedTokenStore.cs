@@ -14,15 +14,9 @@ public sealed class ProtectedTokenStore(string? directory = null) : ICloudTokenS
 
     public async Task<CloudAccount?> LoadAsync(CloudProvider provider, string clientId, CancellationToken cancellationToken = default)
     {
-        if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException(L.T("Core.Cloud.Token.WindowsRequired"));
-        var path = TokenPath(provider, clientId);
-        if (!File.Exists(path)) return null;
-        var encrypted = await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false);
-        byte[] plain;
-        // A file protected for another Windows account or another PC (a restored profile, a reset password) cannot be read here.
-        // It counts as no saved sign-in: connecting again replaces it.
-        try { plain = ProtectedData.Unprotect(encrypted, Entropy, DataProtectionScope.CurrentUser); }
-        catch (CryptographicException) { return null; }
+        // A file that cannot be decrypted by this Windows account counts as no saved sign-in: connecting again replaces it.
+        var plain = await ProtectedFile.ReadAsync(TokenPath(provider, clientId), Entropy, cancellationToken).ConfigureAwait(false);
+        if (plain is null) return null;
         try
         {
             var result = JsonSerializer.Deserialize<CloudAccount>(plain) ?? throw new InvalidDataException(L.T("Core.Cloud.Token.Invalid"));
@@ -38,28 +32,8 @@ public sealed class ProtectedTokenStore(string? directory = null) : ICloudTokenS
         if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException(L.T("Core.Cloud.Token.WindowsRequired"));
         Directory.CreateDirectory(_directory);
         var plain = JsonSerializer.SerializeToUtf8Bytes(account);
-        byte[] encrypted;
-        try { encrypted = ProtectedData.Protect(plain, Entropy, DataProtectionScope.CurrentUser); }
+        try { await ProtectedFile.WriteAsync(TokenPath(account.Provider, account.ClientId), plain, Entropy, cancellationToken).ConfigureAwait(false); }
         finally { CryptographicOperations.ZeroMemory(plain); }
-        var destination = TokenPath(account.Provider, account.ClientId);
-        var temporary = destination + "." + Guid.NewGuid().ToString("N") + ".tmp";
-        try
-        {
-            await using (var output = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous | FileOptions.WriteThrough))
-            {
-                await output.WriteAsync(encrypted, cancellationToken).ConfigureAwait(false);
-                // On the disk before the rename, so that a power cut cannot leave an empty file under the real name.
-                output.Flush(flushToDisk: true);
-            }
-            cancellationToken.ThrowIfCancellationRequested();
-            File.Move(temporary, destination, overwrite: true);
-        }
-        finally
-        {
-            // Left only by a save that has just failed; a second failure while removing it must not take the place of the first.
-            try { if (File.Exists(temporary)) File.Delete(temporary); }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException) { }
-        }
     }
 
     public Task DeleteAsync(CloudProvider provider, string clientId, CancellationToken cancellationToken = default)

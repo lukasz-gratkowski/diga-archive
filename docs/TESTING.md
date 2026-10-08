@@ -48,7 +48,7 @@ No automated test needs Python. Python is needed only for the recorder emulator 
 
 ### How many tests there are
 
-About 720 test cases, of which 43 are in the integration group. This was counted on 5 October 2026: a run of the whole project reported 721, from 238 tests marked `[Fact]` and 81 tests marked `[Theory]` that run once for each of 453 `[InlineData]` rows and of 30 generated rows. The number changes with every pull request. The summary line at the end of a `dotnet test` run gives the real number, and this command lists the tests without running them:
+About 750 test cases, of which 43 are in the integration group. This was counted on 8 October 2026: a run of the whole project reported 756, from 246 tests marked `[Fact]` and 86 tests marked `[Theory]` that run once for each of 480 `[InlineData]` rows and of 30 generated rows. The number changes with every pull request. The summary line at the end of a `dotnet test` run gives the real number, and this command lists the tests without running them:
 
 ```powershell
 dotnet test tests/Diga.Tests --list-tests
@@ -101,10 +101,10 @@ Files marked *integration* belong to the integration group; everything else is i
 
 | File | What it covers |
 |---|---|
-| `CloudTests.cs` | Sign-in (the PKCE test vector of RFC 7636, the state check, the account chooser, the address Google expects, a busy port), renewing and storing a sign-in encrypted, the upload protocol of both services against simulated answers (parts, resuming after a failure, the limit on retries, a full drive, a lost session), which upload servers are accepted, and that an error shows only the fields the service names as its error. |
+| `CloudTests.cs` | Sign-in (the PKCE test vector of RFC 7636, the state check, the account chooser, the address Google expects, a busy port), renewing and storing a sign-in encrypted, the upload protocol of both services against simulated answers (parts, resuming after a failure, the limit on retries, a full drive, a lost session), which upload servers are accepted, and that an error shows only the fields the service names as its error. Also the shared folder: the address of an upload into it, what a refusal says, the link kept encrypted and left alone by a disconnect, and which permission a sign-in asks for, notes as granted and asks for again at renewal. |
 | `CloudAuthRegressionTests.cs` | The Google client secret survives sign-in and renewal and is stored encrypted; a cancelled sign-in opens no browser. |
 | `CloudResilienceTests.cs` | When things are not as they should be: a saved sign-in that cannot be decrypted, a sign-in nobody finishes, free space in the drive, the sign-in listening on this PC only, disconnecting, answers in an unexpected shape, an upload waiting out an interruption, a sign-in the service has ended. |
-| `CloudBrowseTests.cs` | The read-only list of cloud files: paging, the next page requested only from the service's own server, limits on pages, size and time, refusals, ended sign-ins, throttling, odd entries, and that only GET requests are sent. |
+| `CloudBrowseTests.cs` | The read-only list of cloud files: paging, the next page requested only from the service's own server, limits on pages, size and time, refusals, ended sign-ins, throttling, odd entries, and that only GET requests are sent. Also the shared folder: what counts as a link, how it is encoded for Microsoft Graph, the one request that looks the folder up, a folder that comes as a pointer, answers that are not a usable folder, and the list and free space of a folder addressed by its drive and its identifier. |
 
 ### Settings and texts
 
@@ -117,7 +117,7 @@ Files marked *integration* belong to the integration group; everything else is i
 
 ## The catalog tests
 
-Every text the application shows is in the catalogs under `src/Diga.Core/Localization/Resources`: `Shell`, `Journey`, `Design` and `Core`, each in English (`.en.json`) and Polish (`.pl.json`). At the time of writing there are 706 keys per language. `LocalizationTests.cs` keeps the catalogs and the code in step:
+Every text the application shows is in the catalogs under `src/Diga.Core/Localization/Resources`: `Shell`, `Journey`, `Design` and `Core`, each in English (`.en.json`) and Polish (`.pl.json`). At the time of writing there are 730 keys per language. `LocalizationTests.cs` keeps the catalogs and the code in step:
 
 | Test | What fails it |
 |---|---|
@@ -173,6 +173,7 @@ There is no emulator for the cloud. Connecting, uploading and the **Cloud** page
 - OneDrive: the same owner reported on 2 October 2026 that connecting with the built-in registration and uploading worked in version 0.5.2. That report was made with the earlier built-in Microsoft registration. On 5 October 2026 the application got a new built-in registration (application ID `bfd21bf0-32a9-4520-8bbb-d525e3d34aea`, the constant `AppSettings.BuiltInOneDriveClientId`). Nobody has reported connecting or uploading through the new registration yet. The only thing checked for it is that Microsoft's sign-in service knows the ID and accepts the `http://localhost` redirect; this was checked without signing in. A sign-in saved with the earlier built-in ID is not used by the new one: the user connects once more.
 - Google Drive has never been run against Google's real servers by the project.
 - Work or school OneDrive accounts are untested.
+- Uploading into a shared OneDrive or SharePoint folder has never been run against Microsoft's real servers by the project. The requests follow Microsoft's documentation of the Graph interface as it read on 8 October 2026. In particular it is not established which combinations of account and folder Microsoft accepts; [Cloud setup](CLOUD-SETUP.md#which-accounts-can-use-a-shared-folder) lists what the documentation says.
 
 **Real sizes and durations.** The generated test videos are a few seconds long. Downloads, saves and uploads of recordings of several gigabytes, and work that runs for hours, are not part of any automated test.
 

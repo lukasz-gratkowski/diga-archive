@@ -27,6 +27,7 @@ public sealed class CloudUploadService(HttpClient? http = null, CloudAuthService
     {
         ArgumentNullException.ThrowIfNull(request.Account);
         if (!Enum.IsDefined(request.Account.Provider)) throw new ArgumentOutOfRangeException(nameof(request));
+        if (request.Folder is not null && request.Account.Provider != CloudProvider.OneDrive) throw new ArgumentException(L.T("Core.Cloud.Folder.OneDriveOnly"), nameof(request));
         var name = Path.GetFileName(request.SourcePath);
         if (string.IsNullOrWhiteSpace(name) || name.IndexOfAny(['/', '\\', '\0']) >= 0 || name is "." or "..") throw new ArgumentException(L.T("Core.Cloud.Upload.FileNameRequired"), nameof(request));
         await using var file = new FileStream(Path.GetFullPath(request.SourcePath), FileMode.Open, FileAccess.Read, FileShare.Read, 128 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan);
@@ -70,7 +71,7 @@ public sealed class CloudUploadService(HttpClient? http = null, CloudAuthService
             try
             {
                 account = await _auth.RefreshAsync(account, cancellationToken).ConfigureAwait(false);
-                session = await CreateSessionAsync(account, name, file.Length, cancellationToken).ConfigureAwait(false);
+                session = await CreateSessionAsync(account, name, request.Folder, file.Length, cancellationToken).ConfigureAwait(false);
                 break;
             }
             catch (Exception ex) when (IsRetryable(ex, cancellationToken))
@@ -168,7 +169,7 @@ public sealed class CloudUploadService(HttpClient? http = null, CloudAuthService
     // A failed connection or request, or a time limit of the HTTP client; never the caller's own cancellation.
     private static bool IsRetryable(Exception ex, CancellationToken cancellationToken) => ex is HttpRequestException || ex is TaskCanceledException && !cancellationToken.IsCancellationRequested;
 
-    private async Task<Uri> CreateSessionAsync(CloudAccount account, string name, long length, CancellationToken cancellationToken)
+    private async Task<Uri> CreateSessionAsync(CloudAccount account, string name, CloudFolder? folder, long length, CancellationToken cancellationToken)
     {
         string endpoint;
         object metadata;
@@ -179,7 +180,9 @@ public sealed class CloudUploadService(HttpClient? http = null, CloudAuthService
         }
         else
         {
-            endpoint = $"https://graph.microsoft.com/v1.0/me/drive/root:/{Uri.EscapeDataString(name)}:/createUploadSession";
+            // The top folder of the account's own drive, or the folder a sharing link was resolved to, in whichever drive it is.
+            var parent = folder is null ? "me/drive/root" : $"drives/{Uri.EscapeDataString(folder.DriveId)}/items/{Uri.EscapeDataString(folder.ItemId)}";
+            endpoint = $"https://graph.microsoft.com/v1.0/{parent}:/{Uri.EscapeDataString(name)}:/createUploadSession";
             metadata = new Dictionary<string, object> { ["item"] = new Dictionary<string, object> { ["@microsoft.graph.conflictBehavior"] = "rename", ["name"] = name } };
         }
         using var message = new HttpRequestMessage(HttpMethod.Post, endpoint);
@@ -200,7 +203,10 @@ public sealed class CloudUploadService(HttpClient? http = null, CloudAuthService
             throw new CloudSignInExpiredException(account.Provider, CloudErrorDetail.WithDetail(CloudAuthService.ExpiredMessage(account.Provider), refusal));
         }
         if (IsTransient(response.StatusCode)) throw await TransientAsync(response, cancellationToken).ConfigureAwait(false);
-        await EnsureSuccessAsync(response, "Core.Cloud.Upload.StartFailed", cancellationToken).ConfigureAwait(false);
+        // A shared folder that refuses the file is a matter of who may write there, and the message says so. A sign-in that
+        // reaches only the account's own files is the likeliest reason, and the one the user can cure by connecting again.
+        var refused = folder is not null && response.StatusCode is HttpStatusCode.Forbidden or HttpStatusCode.NotFound;
+        await EnsureSuccessAsync(response, !refused ? "Core.Cloud.Upload.StartFailed" : account.SharedFiles ? "Core.Cloud.Upload.FolderRefused" : "Core.Cloud.Upload.FolderRefusedOwnFiles", cancellationToken).ConfigureAwait(false);
         string? url;
         if (account.Provider == CloudProvider.GoogleDrive) url = response.Headers.Location is { IsAbsoluteUri: true } location ? location.AbsoluteUri : null;
         else

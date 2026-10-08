@@ -90,7 +90,7 @@ public sealed class CloudAuthService
         var query = new Dictionary<string, string>
         {
             ["client_id"] = options.ClientId, ["redirect_uri"] = redirect, ["response_type"] = "code",
-            ["scope"] = Scope(options.Provider), ["state"] = state, ["code_challenge"] = challenge, ["code_challenge_method"] = "S256"
+            ["scope"] = Scope(options.Provider, options.SharedFiles), ["state"] = state, ["code_challenge"] = challenge, ["code_challenge_method"] = "S256"
         };
         // Without select_account the provider silently signs in the browser's only current account, which may be the wrong one.
         // Google additionally needs consent to be asked each time, or a repeated sign-in returns no refresh token.
@@ -171,11 +171,12 @@ public sealed class CloudAuthService
             await RememberEndedAsync(account, cancellationToken).ConfigureAwait(false);
             throw new CloudSignInExpiredException(account.Provider, ExpiredMessage(account.Provider));
         }
-        var options = new OAuthClientOptions(account.Provider, account.ClientId, account.ClientSecret);
+        var options = new OAuthClientOptions(account.Provider, account.ClientId, account.ClientSecret, account.SharedFiles);
         ValidateOptions(options);
         var form = new Dictionary<string, string> { ["client_id"] = account.ClientId, ["refresh_token"] = account.RefreshToken, ["grant_type"] = "refresh_token" };
         if (!string.IsNullOrEmpty(options.ClientSecret)) form["client_secret"] = options.ClientSecret;
-        if (account.Provider == CloudProvider.OneDrive) form["scope"] = Scope(account.Provider);
+        // A renewal may ask for no more than the sign-in was given, or Microsoft refuses it.
+        if (account.Provider == CloudProvider.OneDrive) form["scope"] = Scope(account.Provider, account.SharedFiles);
         var refreshed = await ExchangeAsync(options, form, account, cancellationToken).ConfigureAwait(false);
         await _tokens.SaveAsync(refreshed, cancellationToken).ConfigureAwait(false);
         return refreshed;
@@ -210,7 +211,9 @@ public sealed class CloudAuthService
             var accessToken = Text("access_token");
             if (string.IsNullOrWhiteSpace(accessToken)) throw new InvalidDataException(L.T("Core.Cloud.Auth.MissingToken"));
             var expires = root.TryGetProperty("expires_in", out var expiry) && expiry.ValueKind == JsonValueKind.Number && expiry.TryGetInt32(out var seconds) ? Math.Clamp(seconds, 1, 86400) : 3600;
-            return new() { Provider = options.Provider, ClientId = options.ClientId, ClientSecret = options.ClientSecret, AccessToken = accessToken, RefreshToken = Text("refresh_token") ?? existing?.RefreshToken, ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(expires), DriveType = existing?.DriveType, OwnerName = existing?.OwnerName };
+            return new() { Provider = options.Provider, ClientId = options.ClientId, ClientSecret = options.ClientSecret, AccessToken = accessToken, RefreshToken = Text("refresh_token") ?? existing?.RefreshToken, ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(expires), DriveType = existing?.DriveType, OwnerName = existing?.OwnerName,
+                // Microsoft says what it gave, which can be more or less than was asked for; without that word, what was asked for counts.
+                SharedFiles = options.Provider == CloudProvider.OneDrive && (Text("scope") is { } granted ? GrantsSharedFiles(granted) : options.SharedFiles) };
         }
     }
 
@@ -273,7 +276,12 @@ public sealed class CloudAuthService
         if (!Enum.IsDefined(options.Provider)) throw new ArgumentOutOfRangeException(nameof(options));
         if (string.IsNullOrWhiteSpace(options.ClientId)) throw new ArgumentException(L.T("Core.Cloud.Auth.ClientIdRequired"), nameof(options));
     }
-    private static string Scope(CloudProvider provider) => provider == CloudProvider.GoogleDrive ? "https://www.googleapis.com/auth/drive.file" : "offline_access https://graph.microsoft.com/Files.ReadWrite";
+    private static string Scope(CloudProvider provider, bool sharedFiles) => provider == CloudProvider.GoogleDrive ? "https://www.googleapis.com/auth/drive.file"
+        : "offline_access https://graph.microsoft.com/" + (sharedFiles ? SharedFilesPermission : "Files.ReadWrite");
+    private const string SharedFilesPermission = "Files.ReadWrite.All";
+    /// <summary>Whether the permissions a token answer lists include the one for files shared with the account. Microsoft writes them with or without the address of Graph in front.</summary>
+    internal static bool GrantsSharedFiles(string scope) => scope.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .Any(permission => permission[(permission.LastIndexOf('/') + 1)..].Equals(SharedFilesPermission, StringComparison.OrdinalIgnoreCase));
     private static string AuthorizeEndpoint(CloudProvider provider) => provider == CloudProvider.GoogleDrive ? "https://accounts.google.com/o/oauth2/v2/auth" : "https://login.microsoftonline.com/common/oauth2/v2.0/authorize";
     private static string TokenEndpoint(CloudProvider provider) => provider == CloudProvider.GoogleDrive ? "https://oauth2.googleapis.com/token" : "https://login.microsoftonline.com/common/oauth2/v2.0/token";
 }

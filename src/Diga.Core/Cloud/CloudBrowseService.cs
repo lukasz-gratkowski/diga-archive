@@ -7,8 +7,8 @@ using System.Text.Json;
 namespace Diga.Core.Cloud;
 
 /// <summary>
-/// Read-only look at what is already in the user's cloud storage: the OneDrive root, or the Google Drive files this
-/// application created. It sends GET requests only and never asks for file contents.
+/// Read-only look at what is already in the user's cloud storage: the OneDrive root or the folder set for uploads, or the
+/// Google Drive files this application created. It sends GET requests only and never asks for file contents.
 /// </summary>
 public sealed class CloudBrowseService(HttpClient? http = null, CloudAuthService? auth = null)
 {
@@ -17,7 +17,10 @@ public sealed class CloudBrowseService(HttpClient? http = null, CloudAuthService
     public const int MaximumRetries = 2;
     private const int MaximumBodyBytes = 4 * 1024 * 1024;
     private const int MaximumNameLength = 255;
-    private const string OneDriveFirstPage = "https://graph.microsoft.com/v1.0/me/drive/root/children?$select=id,name,size,lastModifiedDateTime,file,folder,package,remoteItem,webUrl&$top=200";
+    private const string OneDriveChildren = "children?$select=id,name,size,lastModifiedDateTime,file,folder,package,remoteItem,webUrl&$top=200";
+    private const string OneDriveFirstPage = "https://graph.microsoft.com/v1.0/me/drive/root/" + OneDriveChildren;
+    private const int MaximumLinkLength = 2048;
+    private const int MaximumIdLength = 256;
     private const string GoogleFirstPage = "https://www.googleapis.com/drive/v3/files?q=trashed%20%3D%20false&orderBy=modifiedTime%20desc&pageSize=200&spaces=drive&corpora=user&fields=nextPageToken,incompleteSearch,files(id,name,size,modifiedTime,mimeType,webViewLink)";
 
     private readonly HttpClient _http = http ?? CloudAuthService.DefaultHttp;
@@ -30,10 +33,14 @@ public sealed class CloudBrowseService(HttpClient? http = null, CloudAuthService
     /// <summary>Shortest wait before a retry; the provider's Retry-After can only lengthen it, up to 30 seconds.</summary>
     public TimeSpan MinimumRetryDelay { get; init; } = TimeSpan.FromSeconds(1);
 
-    public async Task<CloudListing> ListAsync(CloudAccount account, CancellationToken cancellationToken = default)
+    public Task<CloudListing> ListAsync(CloudAccount account, CancellationToken cancellationToken = default) => ListAsync(account, null, cancellationToken);
+
+    /// <summary>Lists the top folder, or <paramref name="folder"/> when one is given (OneDrive only).</summary>
+    public async Task<CloudListing> ListAsync(CloudAccount account, CloudFolder? folder, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(account);
         if (!Enum.IsDefined(account.Provider)) throw new ArgumentOutOfRangeException(nameof(account));
+        if (folder is not null && account.Provider != CloudProvider.OneDrive) throw new ArgumentException(L.T("Core.Cloud.Folder.OneDriveOnly"), nameof(folder));
         cancellationToken.ThrowIfCancellationRequested();
         using var total = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         total.CancelAfter(TotalTimeout);
@@ -42,7 +49,7 @@ public sealed class CloudBrowseService(HttpClient? http = null, CloudAuthService
             account = await _auth.RefreshAsync(account, total.Token).ConfigureAwait(false);
             var items = new List<CloudItem>();
             var truncated = false;
-            var next = new Uri(account.Provider == CloudProvider.GoogleDrive ? GoogleFirstPage : OneDriveFirstPage);
+            var next = new Uri(account.Provider == CloudProvider.GoogleDrive ? GoogleFirstPage : folder is null ? OneDriveFirstPage : FolderAddress(folder) + "/" + OneDriveChildren);
             for (var page = 1; ; page++)
             {
                 var body = await GetPageAsync(account, next, total.Token).ConfigureAwait(false);
@@ -67,10 +74,17 @@ public sealed class CloudBrowseService(HttpClient? http = null, CloudAuthService
     /// Free space in the drive in bytes, or null when the provider names no limit or its answer cannot be used. Both
     /// questions are covered by the permission the sign-in already has.
     /// </summary>
-    public async Task<long?> GetFreeSpaceAsync(CloudAccount account, CancellationToken cancellationToken = default)
+    public Task<long?> GetFreeSpaceAsync(CloudAccount account, CancellationToken cancellationToken = default) => GetFreeSpaceAsync(account, null, cancellationToken);
+
+    /// <summary>
+    /// The same for the drive that holds <paramref name="folder"/>, which may be someone else's. Null also when that drive does
+    /// not tell this account how much room it has.
+    /// </summary>
+    public async Task<long?> GetFreeSpaceAsync(CloudAccount account, CloudFolder? folder, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(account);
         if (!Enum.IsDefined(account.Provider)) throw new ArgumentOutOfRangeException(nameof(account));
+        if (folder is not null && account.Provider != CloudProvider.OneDrive) throw new ArgumentException(L.T("Core.Cloud.Folder.OneDriveOnly"), nameof(folder));
         cancellationToken.ThrowIfCancellationRequested();
         using var total = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         total.CancelAfter(TotalTimeout);
@@ -78,7 +92,10 @@ public sealed class CloudBrowseService(HttpClient? http = null, CloudAuthService
         {
             account = await _auth.RefreshAsync(account, total.Token).ConfigureAwait(false);
             var google = account.Provider == CloudProvider.GoogleDrive;
-            var body = await GetPageAsync(account, new Uri(google ? GoogleQuota : OneDriveQuota), total.Token).ConfigureAwait(false);
+            byte[] body;
+            try { body = await GetPageAsync(account, new Uri(google ? GoogleQuota : folder is null ? OneDriveQuota : $"https://graph.microsoft.com/v1.0/drives/{Uri.EscapeDataString(folder.DriveId)}?$select=quota"), total.Token).ConfigureAwait(false); }
+            // Another account's drive may let this one add files without saying how much room is left.
+            catch (InvalidOperationException ex) when (folder is not null && ex is not CloudSignInExpiredException) { return null; }
             using var document = JsonDocument.Parse(body);
             var root = document.RootElement;
             if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty(google ? "storageQuota" : "quota", out var quota) || quota.ValueKind != JsonValueKind.Object) return null;
@@ -92,6 +109,68 @@ public sealed class CloudBrowseService(HttpClient? http = null, CloudAuthService
         { throw new TimeoutException(L.T("Core.Cloud.Browse.Timeout"), ex); }
     }
 
+    /// <summary>
+    /// True for text that can be the sharing link of a folder: a whole https address without a user name. Nothing is sent to the
+    /// address itself; OneDrive is asked about it, and it is opened in the browser only after OneDrive has said it is a folder.
+    /// </summary>
+    public static bool TryParseFolderLink(string? text, out Uri? link)
+    {
+        var trimmed = text?.Trim() ?? "";
+        link = trimmed.Length is > 0 and <= MaximumLinkLength && Uri.TryCreate(trimmed, UriKind.Absolute, out var uri)
+            && uri.Scheme == Uri.UriSchemeHttps && uri.IsDefaultPort && uri.UserInfo.Length == 0 && uri.Host.Length != 0 ? uri : null;
+        return link is not null;
+    }
+
+    /// <summary>The form in which Microsoft Graph takes a sharing link: "u!" and the link in unpadded base64url.</summary>
+    public static string ShareToken(Uri link)
+    {
+        ArgumentNullException.ThrowIfNull(link);
+        return "u!" + Convert.ToBase64String(Encoding.UTF8.GetBytes(link.OriginalString.Trim())).TrimEnd('=').Replace('/', '_').Replace('+', '-');
+    }
+
+    /// <summary>
+    /// Asks OneDrive which folder a sharing link leads to, as the signed-in account sees it. The question also accepts the link
+    /// for that account, as opening it in a browser would, so that the account may then use the folder.
+    /// </summary>
+    public async Task<CloudFolder> ResolveFolderAsync(CloudAccount account, Uri link, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(account);
+        ArgumentNullException.ThrowIfNull(link);
+        if (account.Provider != CloudProvider.OneDrive) throw new ArgumentException(L.T("Core.Cloud.Folder.OneDriveOnly"), nameof(account));
+        if (!TryParseFolderLink(link.OriginalString, out _)) throw new ArgumentException(L.T("Core.Cloud.Folder.LinkInvalid"), nameof(link));
+        cancellationToken.ThrowIfCancellationRequested();
+        using var total = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        total.CancelAfter(TotalTimeout);
+        try
+        {
+            account = await _auth.RefreshAsync(account, total.Token).ConfigureAwait(false);
+            var address = new Uri($"https://graph.microsoft.com/v1.0/shares/{ShareToken(link)}/driveItem?$select=id,name,folder,file,package,parentReference,remoteItem");
+            var body = await GetPageAsync(account, address, total.Token, "redeemSharingLink", account.SharedFiles ? "Core.Cloud.Folder.Failed" : "Core.Cloud.Folder.FailedOwnFiles").ConfigureAwait(false);
+            JsonDocument document;
+            try { document = JsonDocument.Parse(body); }
+            catch (JsonException ex) { throw new InvalidDataException(L.T("Core.Cloud.Browse.UnexpectedResponse"), ex); }
+            using (document)
+            {
+                var item = document.RootElement;
+                if (item.ValueKind != JsonValueKind.Object) throw new InvalidDataException(L.T("Core.Cloud.Browse.UnexpectedResponse"));
+                // A folder someone else shared can come as a pointer to it; the folder itself is then described inside.
+                var target = item.TryGetProperty("remoteItem", out var remote) && remote.ValueKind == JsonValueKind.Object ? remote : item;
+                if (!IsObject(target, "folder")) throw new InvalidDataException(L.T("Core.Cloud.Folder.NotAFolder"));
+                var id = Text(target, "id");
+                var drive = target.TryGetProperty("parentReference", out var parent) && parent.ValueKind == JsonValueKind.Object ? Text(parent, "driveId") : null;
+                if (!IsId(id) || !IsId(drive)) throw new InvalidDataException(L.T("Core.Cloud.Browse.UnexpectedResponse"));
+                return new(drive!, id!, CleanName(Text(target, "name")) ?? CleanName(Text(item, "name")) ?? id!, link);
+            }
+        }
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        { throw new TimeoutException(L.T("Core.Cloud.Browse.Timeout"), ex); }
+    }
+
+    // The two identifiers become part of an address; they are short and never contain what would end a path segment.
+    private static bool IsId(string? value) => value is { Length: > 0 and <= MaximumIdLength } && value.IndexOfAny(['/', '\\', '?', '#', '%']) < 0 && !value.Any(char.IsControl) && !value.Any(char.IsWhiteSpace);
+
+    private static string FolderAddress(CloudFolder folder) => $"https://graph.microsoft.com/v1.0/drives/{Uri.EscapeDataString(folder.DriveId)}/items/{Uri.EscapeDataString(folder.ItemId)}";
+
     /// <summary>The next-page address is requested with the sign-in attached, so it must be Microsoft Graph itself.</summary>
     public static Uri ValidateNextLink(string? url)
     {
@@ -102,7 +181,7 @@ public sealed class CloudBrowseService(HttpClient? http = null, CloudAuthService
         return uri;
     }
 
-    private async Task<byte[]> GetPageAsync(CloudAccount account, Uri address, CancellationToken cancellationToken)
+    private async Task<byte[]> GetPageAsync(CloudAccount account, Uri address, CancellationToken cancellationToken, string? prefer = null, string failedKey = "Core.Cloud.Browse.Failed")
     {
         for (var failures = 0; ; failures++)
         {
@@ -114,6 +193,7 @@ public sealed class CloudBrowseService(HttpClient? http = null, CloudAuthService
             {
                 using var request = new HttpRequestMessage(HttpMethod.Get, address);
                 request.Headers.Authorization = new("Bearer", account.AccessToken);
+                if (prefer is not null) request.Headers.TryAddWithoutValidation("Prefer", prefer);
                 response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, limit.Token).ConfigureAwait(false);
                 var body = await ReadBodyAsync(response, limit.Token).ConfigureAwait(false);
                 if (response.IsSuccessStatusCode)
@@ -127,7 +207,7 @@ public sealed class CloudBrowseService(HttpClient? http = null, CloudAuthService
                     await _auth.RememberEndedAsync(account, cancellationToken).ConfigureAwait(false);
                     throw new CloudSignInExpiredException(account.Provider, CloudErrorDetail.WithDetail(L.T("Core.Cloud.Browse.SignInRejected"), detail));
                 }
-                throw new InvalidOperationException(CloudErrorDetail.WithDetail(L.T("Core.Cloud.Browse.Failed", status), detail));
+                throw new InvalidOperationException(CloudErrorDetail.WithDetail(L.T(failedKey, status), detail));
             }
             catch (Exception ex) when (failures < MaximumRetries && (ex is HttpRequestException || ex is OperationCanceledException && !cancellationToken.IsCancellationRequested))
             {
